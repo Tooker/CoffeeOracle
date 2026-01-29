@@ -23,4 +23,4 @@ RUN uv sync
 EXPOSE 3000
 EXPOSE 8000
 
-ENTRYPOINT [ "uv", "run","reflex" ,"run"]
+ENTRYPOINT [ "uv", "run","reflex" ,"run", "--env","prod"]
