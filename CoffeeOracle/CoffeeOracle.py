@@ -40,18 +40,13 @@ class State(rx.State):
         self.result = ""
         with client.responses.stream(
            model="gpt-5-nano",
-            reasoning={"effort":"low"},
+            
             input=[
                 {
-                    "role": "system",
+                    "role": "developer",
                     "content": [
-                        { "type": "input_text", "text": f"""Du bist das weltbekannte Kaffeemilschaum Orakel. 
-                         Du hast erfahrung im Lesen von Milchschaum seit mehreren 100 Jahren. 
-                         Der Nutzer {self.name} möchte ein Leseung von dir erhalten. Er wünscht sich ein von 0 bis 10 esoterisches Ergebnis.
-                         Bitte erwähne nicht was der nutzer gewählt hat. Sondern nur das Eigentliche Orakel. 
-                         Er hat sich für den Wert {self.creativity} entschieden. Bitte lese die Tasse für Ihn und gibt ihm eine antwort.
-                         
-                         Der output sollte als nett formatierter markdown text sein""" },
+                        { "type": "input_text", "text": f"""Du bist ein Orakel und liest professionell die Zukunft aus milchschaum auf dem Kaffee.  Was bedeutet diese Tasse? Der nutzer Heißt {self.name} und er wünscht sich eine Esotherik stufe von {self.creativity
+                                                                                        }""" },
                     ],
                 },
                 {
