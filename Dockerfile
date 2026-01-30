@@ -21,6 +21,6 @@ RUN uv sync
 
 
 EXPOSE 3000
-EXPOSE 8000
 
-ENTRYPOINT [ "uv", "run","reflex" ,"run", "--env","prod"]
+
+ENTRYPOINT [ "uv", "run","streamlit" ,"run","./streamlit_app.py","-server.port=3000", "--server.address=0.0.0.0"]
