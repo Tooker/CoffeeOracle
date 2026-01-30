@@ -1,9 +1,11 @@
 import base64
+from io import BytesIO
 from pathlib import Path
 
 import dotenv
 from openai import OpenAI
 import streamlit as st
+from PIL import Image
 
 
 dotenv.load_dotenv()
@@ -45,11 +47,20 @@ def handle_upload(uploaded_file) -> None:
             st.warning("Die hochgeladene Datei scheint leer zu sein.")
             return
 
+        # Bild verkleinern, um Bandbreite und Kontextfenster zu schonen
+        image = Image.open(BytesIO(data))
+        image.thumbnail((1024, 1024))  # max. 1024x1024 Pixel
+        buffer = BytesIO()
+        save_format = getattr(image, "format", None) or "JPEG"
+        image.save(buffer, format=save_format)
+        buffer.seek(0)
+        resized_data = buffer.read()
+
         file_path = UPLOAD_DIR / uploaded_file.name
-        file_path.write_bytes(data)
+        file_path.write_bytes(resized_data)
         st.session_state.uploaded_files.append(uploaded_file.name)
 
-        img_b64 = base64.b64encode(data).decode("utf-8")
+        img_b64 = base64.b64encode(resized_data).decode("utf-8")
 
         st.session_state.show = True
         st.session_state.result = ""
@@ -138,13 +149,13 @@ def main() -> None:
     )
 
     if uploaded_file is not None:
-        st.image(uploaded_file, caption="Deine Kaffeeschaum-Tasse", use_column_width=True)
+        st.image(uploaded_file, caption="Deine Kaffeeschaum-Tasse")
 
     if st.button("Read my Coffee Fortune"):
         handle_upload(uploaded_file)
 
-    if st.session_state.show:
-        st.markdown(st.session_state.result)
+    #if st.session_state.show:
+    #    st.markdown(st.session_state.result)
 
 
 if __name__ == "__main__":  # pragma: no cover - ermöglicht lokalen Start mit `python streamlit_app.py`
