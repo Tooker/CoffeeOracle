@@ -1,4 +1,5 @@
 import base64
+import re
 from io import BytesIO
 from pathlib import Path
 
@@ -15,6 +16,13 @@ client = OpenAI()
 
 UPLOAD_DIR = Path("uploaded_files")
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+def sanitize_input(text: str) -> str:
+    """Entfernt potenziell schädliche Zeichen aus Benutzereingaben."""
+    # Erlaube nur Buchstaben, Zahlen, Leerzeichen und einige harmlose Sonderzeichen
+    return re.sub(r"[^a-zA-Z0-9 .,!?äöüÄÖÜß-]", "", text)
+
 
 
 def init_session_state() -> None:
@@ -70,11 +78,20 @@ def handle_upload(uploaded_file) -> None:
         mime_type = getattr(uploaded_file, "type", None) or "image/jpeg"
         image_url = f"data:{mime_type};base64,{img_b64}"
 
-        dev_prompt = (
+        # Benutzereingaben bereinigen
+        safe_name = sanitize_input(st.session_state.name)
+        safe_creativity = int(st.session_state.creativity)
+
+        # System-Prompt (Instruktionen für das LLM)
+        system_prompt = (
             "Du bist ein Orakel und liest professionell die Zukunft aus Milchschaum auf dem Kaffee. "
-            "Was bedeutet diese Tasse? "
-            f"Der Nutzer heißt {st.session_state.name} "
-            f"und er wünscht sich eine Esotherik stufe von {st.session_state.creativity}"
+            "Antworte immer auf Deutsch."
+        )
+
+        # Benutzer-Prompt (enthält die variablen Eingaben)
+        user_prompt = (
+            f"Was bedeutet diese Tasse für {safe_name}? "
+            f"Die gewünschte Esoterik-Stufe ist {safe_creativity} von 10."
         )
 
         with client.responses.stream(
@@ -85,7 +102,7 @@ def handle_upload(uploaded_file) -> None:
                     "content": [
                         {
                             "type": "input_text",
-                            "text": dev_prompt,
+                            "text": system_prompt,
                         },
                     ],
                 },
@@ -95,6 +112,10 @@ def handle_upload(uploaded_file) -> None:
                         {
                             "type": "input_image",
                             "image_url": image_url,
+                        },
+                        {
+                            "type": "input_text",
+                            "text": user_prompt,
                         },
                     ],
                 },
@@ -141,8 +162,8 @@ def main() -> None:
         "Lade ein Foto deines Kaffeeschaums hoch und lasse das Orakel deine Zukunft deuten. "
         "Gib dazu deinen Namen und die gewünschte Esoterik-Stufe an."
     )
-    st.text_input("Name", key="name")
-    st.slider("Select Creativity", 0, 10, key="creativity")
+    st.text_input("Name", key="name", max_chars=50)
+    st.slider("Select Creativity", 0, 10, key="creativity", step=1)
 
     uploaded_file = st.file_uploader(
         "Upload your coffee foam image", type=["jpg", "jpeg", "png"]
@@ -160,4 +181,3 @@ def main() -> None:
 
 if __name__ == "__main__":  # pragma: no cover - ermöglicht lokalen Start mit `python streamlit_app.py`
     main()
-
