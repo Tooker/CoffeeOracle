@@ -15,10 +15,9 @@ import (
 )
 
 const (
-	PromptVersion = "v1"
+	PromptVersion = "v3"
 
-	systemPrompt = "Du bist das weltbekannte Kaffeemilchschaum-Orakel. Du hast seit mehreren hundert Jahren Erfahrung im Lesen von Milchschaum. Antworte immer auf Deutsch und ausschliesslich als Markdown. Der Nutzer moechte eine Lesung mit einer Esoterik-Stufe von 0 bis 10 erhalten. Erwaehne niemals den gewaehlten Wert oder dass ein Wert ausgewaehlt wurde; liefere nur die eigentliche Orakel-Lesung. Nutze immer diese Struktur: 1) '## Deutung', 2) '## Zeichen im Schaum' als Liste mit 3-5 Punkten, 3) '## Rat des Orakels' mit 2-3 konkreten Schritten. Nutze gezielte **Hervorhebungen**."
-	defaultModel = "gpt-4o-mini"
+	defaultModel = "gpt-5.4-nano"
 	responsesURL = "https://api.openai.com/v1/responses"
 )
 
@@ -208,31 +207,59 @@ type responsesMessage struct {
 	Content []responsesContent `json:"content"`
 }
 
+type responsesReasoning struct {
+	Effort string `json:"effort,omitempty"`
+}
+
 type responsesRequest struct {
-	Model  string             `json:"model"`
-	Stream bool               `json:"stream"`
-	Input  []responsesMessage `json:"input"`
+	Model     string              `json:"model"`
+	Reasoning *responsesReasoning `json:"reasoning,omitempty"`
+	Stream    bool                `json:"stream"`
+	Input     []responsesMessage  `json:"input"`
 }
 
 func buildResponsesPayload(req *OracleRequest) ([]byte, error) {
 	imageDataURI := fmt.Sprintf("data:%s;base64,%s", req.ImageMIME, req.ImageBase64)
-	userPrompt := fmt.Sprintf("Lies die Tasse fuer %s. Nutze intern eine Esoterik-Stufe von %d/10 fuer Ton und Tiefe, aber erwaehne diesen Wert nicht in der Antwort. Gib die Antwort exakt im angeforderten Markdown-Format mit den genannten Ueberschriften aus.", req.Name, req.Creativity)
+	developerPrompt := fmt.Sprintf(`# Rolle und Ziel
+Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Erfahrung im Lesen von Milchschaum.
+
+# Anweisungen
+- Der Nutzer %q möchte eine Lesung erhalten.
+- Er hat einen Esoterik-Wert von %d auf einer Skala von 0 bis 10 gewählt.
+- Dem Modell wird ein Bild von einer Tasse geliefert.
+- Prüfe zuerst, ob auf dem Bild Milchschaum zu erkennen ist.
+- Falls kein Milchschaum zu erkennen ist, antworte exakt: %q
+- Falls Milchschaum zu erkennen ist, erstelle auf Grundlage des sichtbaren Milchschaums eine passende Orakel-Lesung.
+- Erwähne **nicht**, welchen Wert der Nutzer gewählt hat.
+- Erwähne **nicht** den Esoterik-Wert in der Antwort.
+- Gib **nur** das eigentliche Orakel aus.
+
+# Kontext
+- Die Lesung soll sich wie eine echte Deutung aus dem Kaffeemilchschaum anfühlen.
+- Der Nutzername %q ist als Kontext gegeben.
+- Die Deutung soll sich auf das gelieferte Bild der Tasse mit Milchschaum beziehen.
+
+# Ausgabeformat
+- Der Output soll als nett formatierter Markdown-Text erscheinen.
+
+# Verbosität
+- Formuliere stimmungsvoll, direkt und passend zum Charakter eines Orakels.`, req.Name, req.Creativity, "Ich kann hier keinen Milchschaum erkennen.", req.Name)
 
 	body := responsesRequest{
-		Model:  defaultModel,
-		Stream: true,
+		Model:     defaultModel,
+		Reasoning: &responsesReasoning{Effort: "low"},
+		Stream:    true,
 		Input: []responsesMessage{
 			{
 				Role: "developer",
 				Content: []responsesContent{
-					{Type: "input_text", Text: systemPrompt},
+					{Type: "input_text", Text: developerPrompt},
 				},
 			},
 			{
 				Role: "user",
 				Content: []responsesContent{
 					{Type: "input_image", ImageURL: imageDataURI},
-					{Type: "input_text", Text: userPrompt},
 				},
 			},
 		},
