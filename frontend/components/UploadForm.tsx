@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export type UploadPayload = {
   name: string;
@@ -14,6 +14,12 @@ type UploadFormProps = {
   isSubmitting?: boolean;
 };
 
+type MotionPermissionState = "idle" | "active" | "denied" | "unsupported";
+
+type DeviceOrientationEventWithPermission = typeof DeviceOrientationEvent & {
+  requestPermission?: () => Promise<PermissionState>;
+};
+
 // UploadForm collects user input (name, creativity, image) and validates minimal client-side requirements.
 export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFormProps) {
   const formId = useId();
@@ -23,6 +29,7 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileInputResetKey, setFileInputResetKey] = useState(0);
+  const [motionStatus, setMotionStatus] = useState<MotionPermissionState>("idle");
 
   // handleSubmit blocks empty uploads and forwards normalized form values to the parent component.
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -36,6 +43,45 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
 
     onSubmit?.({ name: name.trim(), creativity, file });
   };
+
+  // enableMotionControl asks the browser for motion access, then lets device tilt drive the slider.
+  const enableMotionControl = async () => {
+    if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) {
+      setMotionStatus("unsupported");
+      return;
+    }
+
+    const orientationEvent = DeviceOrientationEvent as DeviceOrientationEventWithPermission;
+    if (typeof orientationEvent.requestPermission === "function") {
+      const permission = await orientationEvent.requestPermission();
+      if (permission !== "granted") {
+        setMotionStatus("denied");
+        return;
+      }
+    }
+
+    setMotionStatus("active");
+  };
+
+  useEffect(() => {
+    if (motionStatus !== "active") {
+      return undefined;
+    }
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      const rawTilt = event.gamma ?? (event.beta === null ? null : event.beta / 2);
+      if (rawTilt === null) {
+        return;
+      }
+
+      const boundedTilt = Math.max(-45, Math.min(45, rawTilt));
+      const nextCreativity = Math.round(((boundedTilt + 45) / 90) * 10);
+      setCreativity(nextCreativity);
+    };
+
+    window.addEventListener("deviceorientation", handleOrientation);
+    return () => window.removeEventListener("deviceorientation", handleOrientation);
+  }, [motionStatus]);
 
   return (
     <form aria-label="Coffee Oracle Upload Form" className="space-y-7" onSubmit={handleSubmit}>
@@ -81,6 +127,24 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
             value={creativity}
             onChange={(e) => setCreativity(Number(e.target.value))}
           />
+          <div className="flex flex-wrap items-center gap-3 text-xs text-coffee-foam/65">
+            <button
+              type="button"
+              onClick={enableMotionControl}
+              className="rounded-full border border-coffee-crema/35 px-3 py-1.5 font-semibold text-coffee-crema transition hover:border-coffee-crema hover:bg-coffee-crema/10"
+            >
+              Neigung nutzen
+            </button>
+            <span>
+              {motionStatus === "active"
+                ? "Aktiv: Kippe dein Gerät nach links oder rechts."
+                : motionStatus === "denied"
+                  ? "Bewegungssensor wurde nicht freigegeben."
+                  : motionStatus === "unsupported"
+                    ? "Dieses Gerät oder dieser Browser unterstützt das nicht."
+                    : "Optional: steuere die Stufe per Geräte-Neigung."}
+            </span>
+          </div>
         </div>
       </div>
 
