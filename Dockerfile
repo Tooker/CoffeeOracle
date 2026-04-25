@@ -32,6 +32,6 @@ ENV FRONTEND_PORT=3000
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-EXPOSE 3000 8080
+EXPOSE 3000
 
 ENTRYPOINT ["/sbin/tini", "--", "/app/docker/start.sh"]
