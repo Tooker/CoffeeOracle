@@ -1,5 +1,6 @@
 import { OracleExperience } from "@/components/OracleExperience";
 
+// Home renders the landing page content and mounts the interactive oracle workflow.
 export default function Home() {
   return (
     <section className="space-y-6 rounded-3xl border-0 bg-coffee-night/80 p-2 shadow-oracle sm:space-y-8 sm:p-4 lg:border lg:border-white/10 lg:p-8">

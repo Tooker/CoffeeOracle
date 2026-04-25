@@ -3,6 +3,7 @@
 import { Button } from "flowbite-react";
 import Link from "next/link";
 
+// HeroActions shows optional CTA buttons for navigation/marketing entry points.
 export function HeroActions() {
   return (
     <div className="flex flex-wrap gap-3">

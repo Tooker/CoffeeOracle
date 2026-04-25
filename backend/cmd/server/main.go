@@ -16,6 +16,8 @@ import (
 	"github.com/tobiasheinloth/CoffeeOracle/backend/internal/server/handlers"
 )
 
+// main is the startup sequence for the backend service.
+// In simple terms: load settings, prepare dependencies, start HTTP server, then shut down cleanly on Ctrl+C.
 func main() {
 	cfg, err := config.Load()
 	if err != nil {

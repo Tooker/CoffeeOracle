@@ -32,6 +32,7 @@ const URL_REGEX = /https?:\/\/\S+/gi;
 const DISALLOWED_REGEX = /[^a-zA-Z0-9\s\-_'.,äöüÄÖÜß]/g;
 const MAX_NAME_LENGTH = 64;
 
+// sanitizeOracleName strips unsafe or unsupported characters before sending user name to backend.
 export function sanitizeOracleName(input: string): string {
   const cleaned = input
     .replace(SCRIPT_REGEX, "")
@@ -41,6 +42,7 @@ export function sanitizeOracleName(input: string): string {
   return cleaned.slice(0, MAX_NAME_LENGTH);
 }
 
+// buildOracleFormData prepares multipart form payload in the format expected by /api/oracle.
 export function buildOracleFormData(payload: OracleUploadPayload): FormData {
   const data = new FormData();
   data.append("name", sanitizeOracleName(payload.name));
@@ -50,6 +52,7 @@ export function buildOracleFormData(payload: OracleUploadPayload): FormData {
   return data;
 }
 
+// streamOracleResponse sends the request and consumes the SSE stream until completion.
 export async function streamOracleResponse({ formData, signal, onEvent }: StreamOptions) {
   const response = await fetch(`${apiBaseUrl}/api/oracle`, {
     method: "POST",
@@ -97,6 +100,7 @@ export async function streamOracleResponse({ formData, signal, onEvent }: Stream
   }
 }
 
+// drainSSEBuffer parses as many complete SSE blocks as possible and returns the unconsumed remainder.
 export function drainSSEBuffer(buffer: string, onEvent: (event: OracleStreamEvent) => void): string {
   let remaining = buffer;
   while (true) {
@@ -113,6 +117,7 @@ export function drainSSEBuffer(buffer: string, onEvent: (event: OracleStreamEven
   return remaining;
 }
 
+// readNextBlock finds one SSE message block separated by blank lines.
 function readNextBlock(input: string): { block: string | null; rest: string } {
   const idxLF = input.indexOf("\n\n");
   const idxCRLF = input.indexOf("\r\n\r\n");
@@ -137,6 +142,7 @@ function readNextBlock(input: string): { block: string | null; rest: string } {
   return { block, rest };
 }
 
+// parseSSEBlock converts raw "event:"/"data:" lines into structured events.
 function parseSSEBlock(block: string): ParsedEvent[] {
   if (!block.trim()) {
     return [];
@@ -174,6 +180,7 @@ function parseSSEBlock(block: string): ParsedEvent[] {
   return messages;
 }
 
+// dispatchEvent maps low-level SSE events to app-level union events consumed by UI state.
 function dispatchEvent(event: ParsedEvent, onEvent: (event: OracleStreamEvent) => void) {
   if (event.event === "error" || event.event === "response.error") {
     onEvent({ type: "error", message: event.data || "Unbekannter Fehler" });
@@ -190,10 +197,12 @@ function dispatchEvent(event: ParsedEvent, onEvent: (event: OracleStreamEvent) =
   }
 }
 
+// mockSSEChunk builds deterministic SSE text for unit tests.
 export function mockSSEChunk(event: string, data: string): string {
   return `event: ${event}\ndata: ${data}\n\n`;
 }
 
+// normalizeChunk preserves meaningful markdown whitespace while removing protocol-specific noise.
 function normalizeChunk(input: string): string {
   const match = input.match(/^\s+/);
   if (!match) {

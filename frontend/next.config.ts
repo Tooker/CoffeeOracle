@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // rewrites proxies browser requests from Next.js to the Go backend during local development.
+  // Users still call /api/* in the frontend; Next forwards to :8080 behind the scenes.
   async rewrites() {
     return [
       {

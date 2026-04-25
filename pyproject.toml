@@ -1,3 +1,4 @@
+# Python package metadata used by tooling in this repository.
 [project]
 name = "coffeeoracle"
 version = "0.1.0"
@@ -12,6 +13,7 @@ dependencies = [
     "streamlit>=1.41.0",
 ]
 
+# Optional dependency groups (install with extras, e.g. `.[test]`).
 [project.optional-dependencies]
 test = [
     "pytest>=8.0.0",

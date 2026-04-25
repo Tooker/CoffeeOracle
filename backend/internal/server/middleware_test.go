@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// TestCORSMiddlewareHandlesOptions checks that preflight requests end early with 204.
 func TestCORSMiddlewareHandlesOptions(t *testing.T) {
 	called := false
 	h := CORSMiddleware("http://example.com")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +26,7 @@ func TestCORSMiddlewareHandlesOptions(t *testing.T) {
 	}
 }
 
+// TestTimeoutMiddlewareCancelsContext verifies request context gets cancelled after timeout.
 func TestTimeoutMiddlewareCancelsContext(t *testing.T) {
 	done := make(chan struct{})
 	h := TimeoutMiddleware(20 * time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

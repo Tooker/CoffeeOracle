@@ -23,10 +23,12 @@ const initialState: StreamState = {
   error: null,
 };
 
+// useOracleStream is a stateful hook that manages upload lifecycle, SSE streaming, and cancellation.
 export function useOracleStream() {
   const [state, setState] = useState<StreamState>(initialState);
   const controllerRef = useRef<AbortController | null>(null);
 
+  // submit aborts any running request, sends a new one, and incrementally appends streamed chunks.
   const submit = useCallback(async (payload: OracleUploadPayload) => {
     controllerRef.current?.abort();
     const controller = new AbortController();
@@ -64,12 +66,14 @@ export function useOracleStream() {
     }
   }, []);
 
+  // cancel stops the active request but keeps current text in case the user wants to keep reading it.
   const cancel = useCallback(() => {
     controllerRef.current?.abort();
     controllerRef.current = null;
     setState((prev) => ({ ...prev, status: "idle" }));
   }, []);
 
+  // reset fully clears stream output and error state.
   const reset = useCallback(() => {
     controllerRef.current?.abort();
     controllerRef.current = null;

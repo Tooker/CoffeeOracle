@@ -14,6 +14,7 @@ type UploadFormProps = {
   isSubmitting?: boolean;
 };
 
+// UploadForm collects user input (name, creativity, image) and validates minimal client-side requirements.
 export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFormProps) {
   const formId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -23,6 +24,7 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
   const [error, setError] = useState<string | null>(null);
   const [fileInputResetKey, setFileInputResetKey] = useState(0);
 
+  // handleSubmit blocks empty uploads and forwards normalized form values to the parent component.
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);

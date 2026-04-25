@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TestValidateRequestSuccess verifies a valid payload passes all validation checks.
 func TestValidateRequestSuccess(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0xFF}, 128))
 	req := &OracleRequest{
@@ -26,6 +27,7 @@ func TestValidateRequestSuccess(t *testing.T) {
 	}
 }
 
+// TestValidateRequestSanitizesName confirms unsafe name fragments are removed.
 func TestValidateRequestSanitizesName(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString([]byte("hello"))
 	req := &OracleRequest{
@@ -45,6 +47,7 @@ func TestValidateRequestSanitizesName(t *testing.T) {
 	}
 }
 
+// TestValidateRequestCreativityRange ensures creativity outside 0..10 is rejected.
 func TestValidateRequestCreativityRange(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString([]byte("hello"))
 	req := &OracleRequest{
@@ -60,6 +63,7 @@ func TestValidateRequestCreativityRange(t *testing.T) {
 	}
 }
 
+// TestValidateRequestRejectsMime ensures unsupported image formats are blocked.
 func TestValidateRequestRejectsMime(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString([]byte("hello"))
 	req := &OracleRequest{
@@ -75,6 +79,7 @@ func TestValidateRequestRejectsMime(t *testing.T) {
 	}
 }
 
+// TestValidateRequestRejectsLargePayload enforces upload size limits.
 func TestValidateRequestRejectsLargePayload(t *testing.T) {
 	large := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0x01}, maxImageBytes+1))
 	req := &OracleRequest{
@@ -90,6 +95,7 @@ func TestValidateRequestRejectsLargePayload(t *testing.T) {
 	}
 }
 
+// TestValidateRequestRequiresImageData ensures empty image content is treated as invalid.
 func TestValidateRequestRequiresImageData(t *testing.T) {
 	req := &OracleRequest{
 		Name:       "Taylor",

@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://coffee-oracle.local"),
 };
 
+// RootLayout defines the global page shell shared by all routes.
 export default function RootLayout({
   children,
 }: Readonly<{

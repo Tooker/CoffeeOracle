@@ -139,29 +139,36 @@ func (s *Service) StreamFortune(ctx context.Context, req *OracleRequest, consume
 	return nil
 }
 
+// responseDelta is the JSON shape for a text chunk from OpenAI streaming events.
 type responseDelta struct {
 	Delta string `json:"delta"`
 }
 
+// responseError is the JSON shape for streamed OpenAI error events.
 type responseError struct {
 	Error struct {
 		Message string `json:"message"`
 	} `json:"error"`
 }
 
+// sseDecoder parses Server-Sent Events (SSE) line-by-line from the HTTP response stream.
 type sseDecoder struct {
 	reader *bufio.Reader
 }
 
+// newSSEDecoder creates a decoder around a generic stream reader.
 func newSSEDecoder(r io.Reader) *sseDecoder {
 	return &sseDecoder{reader: bufio.NewReader(r)}
 }
 
+// sseEvent is one parsed SSE message (event type + message data).
 type sseEvent struct {
 	Type string
 	Data string
 }
 
+// Next reads until one full SSE event is available.
+// It returns io.EOF when no more events are present.
 func (d *sseDecoder) Next() (sseEvent, error) {
 	var eventType strings.Builder
 	var data strings.Builder
@@ -196,21 +203,25 @@ func (d *sseDecoder) Next() (sseEvent, error) {
 	return sseEvent{Type: eventType.String(), Data: data.String()}, nil
 }
 
+// responsesContent models one content item inside the OpenAI Responses API payload.
 type responsesContent struct {
 	Type     string `json:"type"`
 	Text     string `json:"text,omitempty"`
 	ImageURL string `json:"image_url,omitempty"`
 }
 
+// responsesMessage models one chat-like message in the Responses API input array.
 type responsesMessage struct {
 	Role    string             `json:"role"`
 	Content []responsesContent `json:"content"`
 }
 
+// responsesReasoning configures optional reasoning effort for the model.
 type responsesReasoning struct {
 	Effort string `json:"effort,omitempty"`
 }
 
+// responsesRequest is the full request body sent to OpenAI /v1/responses.
 type responsesRequest struct {
 	Model     string              `json:"model"`
 	Reasoning *responsesReasoning `json:"reasoning,omitempty"`
@@ -218,6 +229,8 @@ type responsesRequest struct {
 	Input     []responsesMessage  `json:"input"`
 }
 
+// buildResponsesPayload transforms user input into the OpenAI API JSON payload.
+// It embeds the uploaded image as data URL and constructs the German oracle prompt.
 func buildResponsesPayload(req *OracleRequest) ([]byte, error) {
 	imageDataURI := fmt.Sprintf("data:%s;base64,%s", req.ImageMIME, req.ImageBase64)
 	developerPrompt := fmt.Sprintf(`# Rolle und Ziel

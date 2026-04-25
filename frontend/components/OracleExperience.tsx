@@ -6,12 +6,14 @@ import { UploadForm, UploadPayload } from "@/components/UploadForm";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import { useOracleStream } from "@/hooks/useOracleStream";
 
+// OracleExperience orchestrates the UI state between upload form and streaming result panel.
 export function OracleExperience() {
   const { submit, reset, status, streamText, error } = useOracleStream();
   const [formVersion, setFormVersion] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
+  // setPreviewFromFile manages browser object URLs so image previews work without memory leaks.
   const setPreviewFromFile = (file: File | null) => {
     if (previewUrlRef.current) {
       URL.revokeObjectURL(previewUrlRef.current);
@@ -36,11 +38,13 @@ export function OracleExperience() {
     };
   }, []);
 
+  // handleSubmit starts a new reading and stores a local preview of the uploaded image.
   const handleSubmit = (payload: UploadPayload) => {
     setPreviewFromFile(payload.file);
     submit(payload);
   };
 
+  // handleNewReading resets everything so the user can start with a clean form.
   const handleNewReading = () => {
     reset();
     setPreviewFromFile(null);

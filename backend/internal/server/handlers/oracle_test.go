@@ -19,6 +19,7 @@ type fakeOracleService struct {
 	err    error
 }
 
+// StreamFortune is a controllable fake that replays predefined events for handler tests.
 func (f *fakeOracleService) StreamFortune(ctx context.Context, req *oracle.OracleRequest, consume func(oracle.StreamEvent) error) error {
 	f.req = req
 	for _, evt := range f.chunks {
@@ -29,6 +30,7 @@ func (f *fakeOracleService) StreamFortune(ctx context.Context, req *oracle.Oracl
 	return f.err
 }
 
+// TestOracleHandlerJSONSuccess verifies that valid JSON input produces streamed SSE output.
 func TestOracleHandlerJSONSuccess(t *testing.T) {
 	img := base64.StdEncoding.EncodeToString([]byte("image"))
 	body := map[string]any{
@@ -58,6 +60,7 @@ func TestOracleHandlerJSONSuccess(t *testing.T) {
 	}
 }
 
+// TestOracleHandlerValidationError ensures malformed/missing input returns HTTP 400.
 func TestOracleHandlerValidationError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/oracle", strings.NewReader(`{}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -72,6 +75,7 @@ func TestOracleHandlerValidationError(t *testing.T) {
 	}
 }
 
+// TestOracleHandlerServiceError ensures service failures are returned as SSE error events.
 func TestOracleHandlerServiceError(t *testing.T) {
 	img := base64.StdEncoding.EncodeToString([]byte("image"))
 	body := map[string]any{

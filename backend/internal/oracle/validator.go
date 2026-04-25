@@ -33,6 +33,7 @@ type ValidationError struct {
 	Message string
 }
 
+// Error formats validation failures into a human-readable message.
 func (e ValidationError) Error() string {
 	if e.Field == "" {
 		return e.Message
@@ -83,6 +84,8 @@ func ValidateRequest(req *OracleRequest) error {
 	return nil
 }
 
+// sanitizeName removes potentially unsafe content and keeps only allowed characters.
+// Goal: prevent prompt injection/noise while preserving a normal display name.
 func sanitizeName(input string) string {
 	normalized := scriptTagPattern.ReplaceAllString(input, "")
 	normalized = urlPattern.ReplaceAllString(normalized, "")

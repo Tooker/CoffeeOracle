@@ -10,6 +10,7 @@ type ResultsPanelProps = {
   onNewReading?: () => void;
 };
 
+// ResultsPanel renders stream progress, markdown output, and fallback/error states.
 export function ResultsPanel({
   streamingText = "",
   isLoading = false,

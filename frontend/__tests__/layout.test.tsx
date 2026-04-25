@@ -2,10 +2,12 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import Home from "@/app/page";
 
+// Mock OracleExperience so this test focuses only on page composition, not stream logic.
 jest.mock("@/components/OracleExperience", () => ({
   OracleExperience: () => <div data-testid="oracle-experience" />,
 }));
 
+// Mock UI library components to keep rendering deterministic in unit tests.
 jest.mock("flowbite-react", () => ({
   Button: ({ children }: { children: React.ReactNode }) => (
     <button>{children}</button>
@@ -33,6 +35,7 @@ jest.mock("flowbite-react", () => ({
 }));
 
 describe("Home", () => {
+  // Verifies that the landing page CTA headline is visible.
   it("renders hero call to action", () => {
     render(<Home />);
     expect(screen.getByText(/coffee oracle/i)).toBeInTheDocument();

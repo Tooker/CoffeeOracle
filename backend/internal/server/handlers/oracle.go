@@ -98,6 +98,7 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger.Info("oracle request completed name=%q", req.Name)
 }
 
+// parseRequest chooses the parser based on Content-Type, so clients can submit JSON, form, or multipart.
 func (h *OracleHandler) parseRequest(r *http.Request) (oracle.OracleRequest, error) {
 	contentType := r.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "multipart/form-data") {
@@ -109,6 +110,7 @@ func (h *OracleHandler) parseRequest(r *http.Request) (oracle.OracleRequest, err
 	return h.parseJSON(r)
 }
 
+// parseJSON handles application/json requests and guards body size.
 func (h *OracleHandler) parseJSON(r *http.Request) (oracle.OracleRequest, error) {
 	defer r.Body.Close()
 	var req oracle.OracleRequest
@@ -119,6 +121,7 @@ func (h *OracleHandler) parseJSON(r *http.Request) (oracle.OracleRequest, error)
 	return req, nil
 }
 
+// parseForm handles x-www-form-urlencoded requests (legacy/simple clients).
 func (h *OracleHandler) parseForm(r *http.Request) (oracle.OracleRequest, error) {
 	if err := r.ParseForm(); err != nil {
 		return oracle.OracleRequest{}, err
@@ -130,6 +133,7 @@ func (h *OracleHandler) parseForm(r *http.Request) (oracle.OracleRequest, error)
 	}, nil
 }
 
+// parseMultipart handles file uploads, processes image size/format, then builds the domain request.
 func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, error) {
 	if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
 		return oracle.OracleRequest{}, err
@@ -170,6 +174,8 @@ func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, e
 	}, nil
 }
 
+// resizeAndPersistImage normalizes uploaded images to a reasonable max size.
+// This protects API costs/performance and returns bytes + normalized MIME type.
 func resizeAndPersistImage(data []byte, mime string) ([]byte, string, error) {
 	img, err := imaging.Decode(bytes.NewReader(data))
 	if err != nil {
@@ -211,18 +217,21 @@ func resizeAndPersistImage(data []byte, mime string) ([]byte, string, error) {
 	return buf.Bytes(), outputMime, nil
 }
 
+// writeError sends a standard JSON error response for non-streaming failures.
 func writeError(w http.ResponseWriter, status int, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 }
 
+// writeStreamError emits an SSE error event after the stream has already started.
 func writeStreamError(w http.ResponseWriter, flusher http.Flusher, err error) {
 	message := strings.ReplaceAll(err.Error(), "\n", " ")
 	_ = writeSSEEvent(w, "response.error", message)
 	flusher.Flush()
 }
 
+// writeSSEEvent formats one logical event in SSE wire format.
 func writeSSEEvent(w http.ResponseWriter, eventType, data string) error {
 	if eventType != "" {
 		if _, err := fmt.Fprintf(w, "event: %s\n", eventType); err != nil {

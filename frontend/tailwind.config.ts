@@ -3,6 +3,7 @@ import defaultTheme from "tailwindcss/defaultTheme";
 import flowbitePlugin from "flowbite/plugin";
 
 const config: Config = {
+  // content lists all files Tailwind scans to generate only the CSS classes we actually use.
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,6 +12,7 @@ const config: Config = {
     "./node_modules/flowbite/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
+    // extend adds project-specific design tokens on top of Tailwind defaults.
     extend: {
       colors: {
         coffee: {
@@ -33,6 +35,7 @@ const config: Config = {
       },
     },
   },
+  // flowbitePlugin enables additional prebuilt UI utilities/components from Flowbite.
   plugins: [flowbitePlugin],
 };
 

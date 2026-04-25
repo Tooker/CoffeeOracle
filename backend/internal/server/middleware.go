@@ -53,17 +53,20 @@ func TimeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 	}
 }
 
+// responseWriter wraps the default writer so middleware can track status code and keep flush support.
 type responseWriter struct {
 	http.ResponseWriter
 	flusher http.Flusher
 	status  int
 }
 
+// WriteHeader captures the status code before forwarding it to the real response writer.
 func (rw *responseWriter) WriteHeader(statusCode int) {
 	rw.status = statusCode
 	rw.ResponseWriter.WriteHeader(statusCode)
 }
 
+// Flush forwards streaming flush calls when the underlying writer supports it.
 func (rw *responseWriter) Flush() {
 	if rw.flusher != nil {
 		rw.flusher.Flush()

@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestServiceStreamFortune checks end-to-end SSE decoding from mocked OpenAI stream.
 func TestServiceStreamFortune(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")

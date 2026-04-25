@@ -26,11 +26,13 @@ func NewRouter(opts RouterOptions) *http.ServeMux {
 	return mux
 }
 
+// healthResponse is the payload returned by /healthz for liveness checks.
 type healthResponse struct {
 	Status    string    `json:"status"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// healthzHandler answers monitoring probes with a minimal JSON status payload.
 func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

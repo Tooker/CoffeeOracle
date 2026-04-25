@@ -49,6 +49,8 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
+// getEnvWithDefault reads an environment variable and falls back to a default value.
+// This keeps the app runnable even when optional settings are not provided.
 func getEnvWithDefault(key, def string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
@@ -56,6 +58,8 @@ func getEnvWithDefault(key, def string) string {
 	return def
 }
 
+// parseBoolWithDefault converts text like "true"/"false" into a boolean.
+// If parsing fails, we safely fall back to a known default.
 func parseBoolWithDefault(val string, def bool) bool {
 	if val == "" {
 		return def
