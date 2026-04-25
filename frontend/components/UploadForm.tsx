@@ -126,7 +126,7 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
       <div className="flex flex-wrap gap-3 pt-1">
         <button
           type="submit"
-          className="min-w-[220px] rounded-xl border border-coffee-crema/50 bg-coffee-crema/15 px-6 py-3 text-base font-semibold text-coffee-foam transition hover:bg-coffee-crema/25 disabled:cursor-not-allowed disabled:opacity-60"
+          className="oracle-ritual-button min-w-[220px] rounded-xl border border-coffee-crema/50 bg-coffee-crema/15 px-6 py-3 text-base font-semibold text-coffee-foam transition hover:bg-coffee-crema/25 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Orakel wird kontaktiert" : "Coffee Fortune anfragen"}

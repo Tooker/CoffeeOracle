@@ -57,7 +57,7 @@ export function OracleExperience() {
   return (
     <div className="space-y-8">
       {!showOracle ? (
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl transition-all duration-500 md:p-10">
+        <div className="oracle-load-block oracle-load-block-form oracle-form-card rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl transition-all duration-500 md:p-10">
           <UploadForm
             key={`upload-form-${formVersion}`}
             onSubmit={handleSubmit}

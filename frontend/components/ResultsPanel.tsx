@@ -19,14 +19,16 @@ export function ResultsPanel({
   expanded = false,
   onNewReading,
 }: ResultsPanelProps) {
+  const hasResponse = Boolean(streamingText.trim()) && !error;
+
   return (
     <aside
-      className={`space-y-5 rounded-3xl border-0 bg-coffee-bean/70 text-sm text-coffee-foam/80 lg:border lg:border-white/10 ${expanded ? "oracle-panel-enter p-2 sm:p-4 md:p-8" : "p-2 sm:p-4"}`}
+      className={`space-y-5 rounded-3xl border-0 bg-coffee-bean/70 text-sm text-coffee-foam/80 lg:border lg:border-white/10 ${expanded ? "oracle-panel-enter p-2 sm:p-4 md:p-8" : "p-2 sm:p-4"} ${hasResponse ? "oracle-response-reveal" : ""}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-coffee-crema">Orakel-Ausgabe</p>
-          <p className={`${expanded ? "text-xl sm:text-2xl md:text-3xl" : "text-lg"} font-semibold text-white`}>
+          <p className={`oracle-heading-sweep ${expanded ? "text-xl sm:text-2xl md:text-3xl" : "text-lg"} font-semibold text-white`}>
             Prophezeiung
           </p>
         </div>
@@ -44,7 +46,7 @@ export function ResultsPanel({
         className={`space-y-3 rounded-2xl border-0 bg-black/30 lg:border lg:border-white/10 ${expanded ? "min-h-[280px] p-2 sm:min-h-[320px] sm:p-3 md:p-6" : "min-h-[180px] p-2 sm:p-3"}`}
       >
         {previewImageUrl ? (
-          <figure className="overflow-hidden rounded-xl border-0 bg-black/30 lg:border lg:border-white/10">
+          <figure className="oracle-cup-drift overflow-hidden rounded-xl border-0 bg-black/30 lg:border lg:border-white/10">
             <img
               src={previewImageUrl}
               alt="Hochgeladenes Kaffeeschaumbild"
@@ -113,7 +115,9 @@ export function ResultsPanel({
           </div>
         ) : isLoading ? (
           <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 text-center">
-            <div className="oracle-orb" aria-hidden />
+            <div className="oracle-reading-aura" aria-hidden>
+              <div className="oracle-orb" />
+            </div>
             <p className="oracle-pulse-text text-base text-coffee-crema/90 md:text-lg">
               Das Orakel sammelt Zeichen aus dem Schaum ...
             </p>
