@@ -46,6 +46,11 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
 
   // enableMotionControl asks the browser for motion access, then lets device tilt drive the slider.
   const enableMotionControl = async () => {
+    if (motionStatus === "active") {
+      setMotionStatus("idle");
+      return;
+    }
+
     if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) {
       setMotionStatus("unsupported");
       return;
@@ -133,7 +138,7 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
               onClick={enableMotionControl}
               className="rounded-full border border-coffee-crema/35 px-3 py-1.5 font-semibold text-coffee-crema transition hover:border-coffee-crema hover:bg-coffee-crema/10"
             >
-              Neigung nutzen
+              {motionStatus === "active" ? "Neigung ausschalten" : "Neigung nutzen"}
             </button>
             <span>
               {motionStatus === "active"
