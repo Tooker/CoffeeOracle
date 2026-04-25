@@ -1,0 +1,17 @@
+.git
+.gitignore
+
+.env
+backend/.env
+frontend/.env
+frontend/.env.local
+
+.tmp
+uploaded_files
+
+backend/bin
+frontend/.next
+frontend/node_modules
+
+**/node_modules
+**/.DS_Store
