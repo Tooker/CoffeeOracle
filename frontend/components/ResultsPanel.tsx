@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 type ResultsPanelProps = {
   streamingText?: string;
+  shareUrl?: string;
   isLoading?: boolean;
   error?: string;
   previewImageUrl?: string;
@@ -13,6 +17,7 @@ type ResultsPanelProps = {
 // ResultsPanel renders stream progress, markdown output, and fallback/error states.
 export function ResultsPanel({
   streamingText = "",
+  shareUrl,
   isLoading = false,
   error,
   previewImageUrl,
@@ -20,6 +25,16 @@ export function ResultsPanel({
   onNewReading,
 }: ResultsPanelProps) {
   const hasResponse = Boolean(streamingText.trim()) && !error;
+  const [copied, setCopied] = useState(false);
+
+  const copyShareUrl = async () => {
+    if (!shareUrl) {
+      return;
+    }
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
 
   return (
     <aside
@@ -111,6 +126,28 @@ export function ResultsPanel({
                 {streamingText}
               </ReactMarkdown>
             </div>
+            {shareUrl ? (
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-coffee-crema/20 bg-white/[0.03] p-3 text-sm">
+                <button
+                  type="button"
+                  onClick={copyShareUrl}
+                  className="rounded-xl border border-white/30 px-4 py-2 font-medium text-coffee-foam/90 transition hover:border-white/60 hover:bg-white/5"
+                >
+                  {copied ? "Link kopiert" : "Copy to Clipboard"}
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Meine CoffeeOracle Lesung: ${shareUrl}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#25D366]/50 px-4 py-2 font-medium text-[#dcffe9] transition hover:border-[#25D366] hover:bg-[#25D366]/10"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+                    <path d="M20.5 3.5A11.9 11.9 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.1 1.6 5.9L0 24l6.5-1.7a11.8 11.8 0 0 0 5.6 1.4h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.5-8.4ZM12.2 21.7h-.1a9.8 9.8 0 0 1-5-1.4l-.4-.2-3.8 1 1-3.7-.2-.4a9.8 9.8 0 1 1 8.5 4.7Zm5.4-7.3c-.3-.1-1.8-.9-2.1-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.4.1-.6l.4-.4c.1-.1.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.7-.9-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3Z" />
+                  </svg>
+                  WhatsApp
+                </a>
+              </div>
+            ) : null}
             {isLoading && <p className="text-xs text-coffee-crema/70">Das Orakel orakelt …</p>}
           </div>
         ) : isLoading ? (

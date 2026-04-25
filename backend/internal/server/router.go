@@ -9,6 +9,8 @@ import (
 // RouterOptions holds dependencies for HTTP handlers.
 type RouterOptions struct {
 	OracleHandler http.Handler
+	ImageHandler  http.Handler
+	ShareHandler  http.Handler
 	Middleware    []func(http.Handler) http.Handler
 }
 
@@ -22,6 +24,12 @@ func NewRouter(opts RouterOptions) *http.ServeMux {
 			h = opts.Middleware[i](h)
 		}
 		mux.Handle("/api/oracle", h)
+	}
+	if opts.ImageHandler != nil {
+		mux.Handle("/api/image/", opts.ImageHandler)
+	}
+	if opts.ShareHandler != nil {
+		mux.Handle("/api/share/", opts.ShareHandler)
 	}
 	return mux
 }

@@ -3,24 +3,32 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/disintegration/imaging"
 	_ "golang.org/x/image/webp"
 
-	"github.com/tobiasheinloth/CoffeeOracle/backend/internal/oracle"
 	"github.com/tobiasheinloth/CoffeeOracle/backend/internal/logger"
+	"github.com/tobiasheinloth/CoffeeOracle/backend/internal/oracle"
 )
 
-const maxUploadBytes = 10 * 1024 * 1024
+const (
+	maxUploadBytes  = 10 * 1024 * 1024
+	imageStoreDir   = "data/oracle-images"
+	readingStoreDir = "data/oracle-readings"
+)
 
 // OracleService abstracts the oracle domain logic for handler use.
 type OracleService interface {
@@ -56,11 +64,11 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info(
-		"oracle request received name=%q creativity=%d image_mime=%q image_name=%q remote=%q prompt_version=%s",
+		"oracle request received name=%q creativity=%d image_mime=%q image_url=%q remote=%q prompt_version=%s",
 		req.Name,
 		req.Creativity,
 		req.ImageMIME,
-		req.ImageName,
+		imageURL(req.ImageName),
 		r.RemoteAddr,
 		oracle.PromptVersion,
 	)
@@ -77,9 +85,13 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	ctx := r.Context()
+	var fortune strings.Builder
 	err = h.svc.StreamFortune(ctx, &req, func(evt oracle.StreamEvent) error {
 		if evt.Data == "" {
 			return nil
+		}
+		if evt.Type == "response.output_text.delta" {
+			fortune.WriteString(evt.Data)
 		}
 		if err := writeSSEEvent(w, evt.Type, evt.Data); err != nil {
 			return err
@@ -91,6 +103,18 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		logger.Error("oracle request failed name=%q error=%v", req.Name, err)
 		writeStreamError(w, flusher, err)
 		return
+	}
+
+	shareURL, err := persistReading(fortune.String(), req.ImageName)
+	if err != nil {
+		logger.Error("oracle share persistence failed name=%q error=%v", req.Name, err)
+	} else if err := writeSSEJSONEvent(w, "share", map[string]string{"url": shareURL}); err != nil {
+		logger.Error("oracle share event failed name=%q error=%v", req.Name, err)
+		writeStreamError(w, flusher, err)
+		return
+	} else {
+		logger.Info("oracle reading stored name=%q share_url=%q", req.Name, shareURL)
+		flusher.Flush()
 	}
 
 	fmt.Fprint(w, "event: complete\ndata: done\n\n")
@@ -139,7 +163,7 @@ func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, e
 		return oracle.OracleRequest{}, err
 	}
 
-	file, header, err := r.FormFile("file")
+	file, _, err := r.FormFile("file")
 	if err != nil {
 		return oracle.OracleRequest{}, err
 	}
@@ -150,12 +174,7 @@ func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, e
 		return oracle.OracleRequest{}, err
 	}
 
-	mime := header.Header.Get("Content-Type")
-	if mime == "" {
-		mime = "image/jpeg"
-	}
-
-	processed, processedMIME, err := resizeAndPersistImage(data, mime)
+	processed, processedMIME, imageName, err := resizeAndPersistImage(data)
 	if err != nil {
 		return oracle.OracleRequest{}, err
 	}
@@ -168,7 +187,7 @@ func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, e
 	return oracle.OracleRequest{
 		Name:        r.FormValue("name"),
 		Creativity:  creativity,
-		ImageName:   header.Filename,
+		ImageName:   imageName,
 		ImageMIME:   processedMIME,
 		ImageBase64: base64.StdEncoding.EncodeToString(processed),
 	}, nil
@@ -176,10 +195,10 @@ func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, e
 
 // resizeAndPersistImage normalizes uploaded images to a reasonable max size.
 // This protects API costs/performance and returns bytes + normalized MIME type.
-func resizeAndPersistImage(data []byte, mime string) ([]byte, string, error) {
+func resizeAndPersistImage(data []byte) ([]byte, string, string, error) {
 	img, err := imaging.Decode(bytes.NewReader(data))
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	bounds := img.Bounds()
@@ -193,28 +212,89 @@ func resizeAndPersistImage(data []byte, mime string) ([]byte, string, error) {
 	}
 
 	buf := &bytes.Buffer{}
-	encodeFormat := imaging.PNG
-	if strings.Contains(mime, "jpeg") || strings.Contains(mime, "jpg") {
-		encodeFormat = imaging.JPEG
+	if err := imaging.Encode(buf, img, imaging.JPEG); err != nil {
+		return nil, "", "", err
 	}
 
-	if err := imaging.Encode(buf, img, encodeFormat); err != nil {
-		return nil, "", err
+	imageName, err := persistImage(buf.Bytes())
+	if err != nil {
+		return nil, "", "", err
 	}
 
-	tmpFile, err := os.CreateTemp("", "coffee-oracle-*.img")
-	if err == nil {
-		_, _ = tmpFile.Write(buf.Bytes())
-		tmpFile.Close()
-		os.Remove(tmpFile.Name())
+	return buf.Bytes(), "image/jpeg", imageName, nil
+}
+
+// persistImage stores the processed image with a UUIDv4 filename for later log access.
+func persistImage(data []byte) (string, error) {
+	if err := os.MkdirAll(imageStoreDir, 0o755); err != nil {
+		return "", err
 	}
 
-	outputMime := "image/png"
-	if encodeFormat == imaging.JPEG {
-		outputMime = "image/jpeg"
+	id, err := uuid4String()
+	if err != nil {
+		return "", err
+	}
+	name := id + ".jpeg"
+
+	if err := os.WriteFile(filepath.Join(imageStoreDir, name), data, 0o644); err != nil {
+		return "", err
 	}
 
-	return buf.Bytes(), outputMime, nil
+	return name, nil
+}
+
+// persistReading stores the markdown fortune and returns its public share URL.
+func persistReading(markdown string, imageName string) (string, error) {
+	if err := os.MkdirAll(readingStoreDir, 0o755); err != nil {
+		return "", err
+	}
+
+	id, err := uuid4String()
+	if err != nil {
+		return "", err
+	}
+
+	content := buildReadingMarkdown(markdown, imageName)
+	if err := os.WriteFile(filepath.Join(readingStoreDir, id+".md"), []byte(content), 0o644); err != nil {
+		return "", err
+	}
+
+	return "/api/share/" + id, nil
+}
+
+// buildReadingMarkdown keeps the share artifact useful even outside the web UI.
+func buildReadingMarkdown(markdown string, imageName string) string {
+	var out strings.Builder
+	out.WriteString("# CoffeeOracle Lesung\n\n")
+	if imageName != "" {
+		out.WriteString("![Hochgeladenes Kaffeeschaumbild](")
+		out.WriteString(imageURL(imageName))
+		out.WriteString(")\n\n")
+	}
+	out.WriteString(strings.TrimSpace(markdown))
+	out.WriteString("\n")
+	return out.String()
+}
+
+// uuid4String creates identifiers like "550e8400-e29b-41d4-a716-446655440000".
+func uuid4String() (string, error) {
+	raw := make([]byte, 16)
+	if _, err := rand.Read(raw); err != nil {
+		return "", err
+	}
+	raw[6] = (raw[6] & 0x0f) | 0x40
+	raw[8] = (raw[8] & 0x3f) | 0x80
+
+	encoded := hex.EncodeToString(raw)
+	return fmt.Sprintf("%s-%s-%s-%s-%s", encoded[0:8], encoded[8:12], encoded[12:16], encoded[16:20], encoded[20:32]), nil
+}
+
+// imageURL returns the public API path for a stored image filename.
+func imageURL(name string) string {
+	if name == "" {
+		return ""
+	}
+	return "/api/image/" + path.Base(name)
 }
 
 // writeError sends a standard JSON error response for non-streaming failures.
@@ -247,4 +327,13 @@ func writeSSEEvent(w http.ResponseWriter, eventType, data string) error {
 
 	_, err := fmt.Fprint(w, "\n")
 	return err
+}
+
+// writeSSEJSONEvent sends structured metadata over the existing SSE stream.
+func writeSSEJSONEvent(w http.ResponseWriter, eventType string, payload any) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	return writeSSEEvent(w, eventType, string(data))
 }

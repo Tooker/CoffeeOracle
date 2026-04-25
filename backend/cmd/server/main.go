@@ -28,6 +28,8 @@ func main() {
 
 	oracleSvc := oracle.NewService(cfg.OpenAIAPIKey)
 	oracleHandler := handlers.NewOracleHandler(oracleSvc)
+	imageHandler := handlers.NewImageHandler()
+	shareHandler := handlers.NewShareHandler()
 
 	middleware := []func(http.Handler) http.Handler{
 		server.LoggingMiddleware,
@@ -37,6 +39,8 @@ func main() {
 
 	router := server.NewRouter(server.RouterOptions{
 		OracleHandler: oracleHandler,
+		ImageHandler:  imageHandler,
+		ShareHandler:  shareHandler,
 		Middleware:    middleware,
 	})
 

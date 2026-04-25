@@ -9,6 +9,7 @@ export type OracleUploadPayload = {
 export type OracleStreamEvent =
   | { type: "chunk"; value: string }
   | { type: "error"; message: string }
+  | { type: "share"; url: string }
   | { type: "complete" };
 
 type StreamOptions = {
@@ -189,6 +190,18 @@ function dispatchEvent(event: ParsedEvent, onEvent: (event: OracleStreamEvent) =
 
   if (event.event === "complete" || event.event === "response.completed") {
     onEvent({ type: "complete" });
+    return;
+  }
+
+  if (event.event === "share") {
+    try {
+      const payload = JSON.parse(event.data) as { url?: string };
+      if (payload.url) {
+        onEvent({ type: "share", url: payload.url });
+      }
+    } catch {
+      // ignore malformed share metadata; text streaming should still succeed
+    }
     return;
   }
 

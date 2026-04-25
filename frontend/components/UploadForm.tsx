@@ -132,7 +132,7 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
             value={creativity}
             onChange={(e) => setCreativity(Number(e.target.value))}
           />
-          <div className="flex flex-wrap items-center gap-3 text-xs text-coffee-foam/65">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-coffee-foam/65 md:hidden">
             <button
               type="button"
               onClick={enableMotionControl}

@@ -8,7 +8,7 @@ import { useOracleStream } from "@/hooks/useOracleStream";
 
 // OracleExperience orchestrates the UI state between upload form and streaming result panel.
 export function OracleExperience() {
-  const { submit, reset, status, streamText, error } = useOracleStream();
+  const { submit, reset, status, streamText, shareUrl, error } = useOracleStream();
   const [formVersion, setFormVersion] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -71,6 +71,7 @@ export function OracleExperience() {
         <ResultsPanel
           expanded
           streamingText={streamText}
+          shareUrl={shareUrl ?? undefined}
           isLoading={isBusy}
           error={error ?? undefined}
           previewImageUrl={previewImageUrl ?? undefined}

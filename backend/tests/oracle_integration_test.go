@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -21,6 +22,8 @@ func (mockOracleService) StreamFortune(ctx context.Context, req *oracle.OracleRe
 
 // TestOracleHandlerIntegration verifies the full handler request/response flow.
 func TestOracleHandlerIntegration(t *testing.T) {
+	t.Cleanup(func() { _ = os.RemoveAll("data") })
+
 	body := `{"name":"A","creativity":5,"imageName":"cup.png","imageMime":"image/png","imageBase64":"aGVsbG8="}`
 	req := httptest.NewRequest(http.MethodPost, "/api/oracle", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")

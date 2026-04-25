@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -32,6 +33,8 @@ func (f *fakeOracleService) StreamFortune(ctx context.Context, req *oracle.Oracl
 
 // TestOracleHandlerJSONSuccess verifies that valid JSON input produces streamed SSE output.
 func TestOracleHandlerJSONSuccess(t *testing.T) {
+	t.Cleanup(func() { _ = os.RemoveAll("data") })
+
 	img := base64.StdEncoding.EncodeToString([]byte("image"))
 	body := map[string]any{
 		"name":        "Alex",
@@ -77,6 +80,8 @@ func TestOracleHandlerValidationError(t *testing.T) {
 
 // TestOracleHandlerServiceError ensures service failures are returned as SSE error events.
 func TestOracleHandlerServiceError(t *testing.T) {
+	t.Cleanup(func() { _ = os.RemoveAll("data") })
+
 	img := base64.StdEncoding.EncodeToString([]byte("image"))
 	body := map[string]any{
 		"name":        "Alex",

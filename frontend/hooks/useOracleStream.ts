@@ -14,12 +14,14 @@ type OracleStatus = "idle" | "uploading" | "streaming" | "error";
 type StreamState = {
   status: OracleStatus;
   text: string;
+  shareUrl: string | null;
   error: string | null;
 };
 
 const initialState: StreamState = {
   status: "idle",
   text: "",
+  shareUrl: null,
   error: null,
 };
 
@@ -34,7 +36,7 @@ export function useOracleStream() {
     const controller = new AbortController();
     controllerRef.current = controller;
 
-    setState({ status: "uploading", text: "", error: null });
+    setState({ status: "uploading", text: "", shareUrl: null, error: null });
 
     const formData = buildOracleFormData(payload);
 
@@ -47,11 +49,15 @@ export function useOracleStream() {
             setState((prev) => ({
               status: "streaming",
               text: prev.text + event.value,
+              shareUrl: prev.shareUrl,
               error: null,
             }));
           } else if (event.type === "error") {
-            setState({ status: "error", text: "", error: event.message });
+            setState({ status: "error", text: "", shareUrl: null, error: event.message });
             controller.abort();
+          } else if (event.type === "share") {
+            const shareUrl = new URL(event.url, window.location.origin).toString();
+            setState((prev) => ({ ...prev, shareUrl }));
           } else if (event.type === "complete") {
             setState((prev) => ({ ...prev, status: "idle" }));
           }
@@ -62,7 +68,7 @@ export function useOracleStream() {
         return;
       }
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      setState({ status: "error", text: "", error: message });
+      setState({ status: "error", text: "", shareUrl: null, error: message });
     }
   }, []);
 
@@ -91,6 +97,7 @@ export function useOracleStream() {
     cancel,
     reset,
     streamText: state.text,
+    shareUrl: state.shareUrl,
     status: state.status,
     error: state.error,
   };
