@@ -1,0 +1,29 @@
+{
+  "id": "go-next-stack-01",
+  "seq": "01",
+  "title": "Scaffold Go backend service and configuration",
+  "status": "pending",
+  "depends_on": [],
+  "parallel": false,
+  "suggested_agent": "GoBackendEngineer",
+  "context_files": [],
+  "reference_files": [],
+  "acceptance_criteria": [
+    "Go module initialized under backend/ with tidy dependencies and gofmt/go vet passing",
+    "Server boots via `go run ./cmd/server` and exposes GET /healthz returning 200",
+    "Configuration package loads OpenAI key and port from env/.env with validation errors for missing values",
+    "Project layout includes cmd/server, internal/server, internal/config plus .env.example documenting required variables"
+  ],
+  "deliverables": [
+    "backend/go.mod",
+    "backend/go.sum",
+    "backend/cmd/server/main.go",
+    "backend/internal/config/config.go",
+    "backend/internal/server/router.go",
+    "backend/.env.example"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

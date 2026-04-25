@@ -1,0 +1,36 @@
+{
+  "id": "go-next-stack-07",
+  "seq": "07",
+  "title": "Wire UI to Go backend streaming API",
+  "status": "pending",
+  "depends_on": ["03", "06"],
+  "parallel": false,
+  "suggested_agent": "OpenFrontendSpecialist",
+  "context_files": [
+    ".opencode/context/ui/web/ui-styling-standards.md",
+    ".opencode/context/core/workflows/design-iteration-overview.md",
+    ".opencode/context/core/workflows/design-iteration-stage-implementation.md",
+    ".opencode/context/core/workflows/design-iteration-stage-animation.md"
+  ],
+  "reference_files": [
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "Client library posts sanitized payloads + base64 image to backend `/api/oracle` and handles SSE/streamed text updates",
+    "UI displays incremental fortune text, loading states, upload progress, and error toasts with retry",
+    "Integration test or mocked hook verifies happy/error paths without hitting network",
+    "API URL pulled from env config and protected against prompt injection by sanitizing user inputs before request",
+    "Follows 4-stage design workflow",
+    "Responsive at all breakpoints"
+  ],
+  "deliverables": [
+    "frontend/lib/api/oracleClient.ts",
+    "frontend/hooks/useOracleStream.ts",
+    "frontend/components/ResultsPanel.tsx",
+    "frontend/tests/oracleClient.test.ts"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

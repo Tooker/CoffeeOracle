@@ -1,0 +1,20 @@
+{
+  "id": "go-next-stack",
+  "name": "Go backend and Next.js frontend stack",
+  "status": "active",
+  "objective": "Deliver Go API backend and Next.js TypeScript frontend foundations for CoffeeOracle",
+  "context_files": [],
+  "reference_files": [
+    "README.md",
+    "streamlit_app.py"
+  ],
+  "exit_criteria": [
+    "Functional Go backend service scaffolded and configurable via environment variables",
+    "Functional Next.js TypeScript frontend scaffolded with responsive UI shell",
+    "Documented integration steps and tests for backend/frontend handoff"
+  ],
+  "subtask_count": 8,
+  "completed_count": 0,
+  "created_at": "2026-04-12T19:45:00Z",
+  "completed_at": null
+}

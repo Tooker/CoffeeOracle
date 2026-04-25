@@ -1,0 +1,36 @@
+{
+  "id": "go-next-stack-06",
+  "seq": "06",
+  "title": "Design Coffee Oracle upload interface (layout + theme)",
+  "status": "pending",
+  "depends_on": ["05"],
+  "parallel": true,
+  "suggested_agent": "OpenFrontendSpecialist",
+  "context_files": [
+    ".opencode/context/ui/web/ui-styling-standards.md",
+    ".opencode/context/core/workflows/design-iteration-overview.md",
+    ".opencode/context/core/workflows/design-iteration-stage-layout.md",
+    ".opencode/context/core/workflows/design-iteration-stage-theme.md"
+  ],
+  "reference_files": [
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "Design iteration doc in frontend/design_iterations/ outlines layout + theme decisions referencing CoffeeOracle goals",
+    "Next.js page renders hero copy, form shell, and results placeholder components with Tailwind/Flowbite styling",
+    "Form includes semantic labels, validation copy, and creativity slider 0-10 mirroring backend contract",
+    "UI uses accessible color contrast, keyboard focus treatment, and placeholder state for streaming output",
+    "Follows 4-stage design workflow",
+    "Responsive at all breakpoints"
+  ],
+  "deliverables": [
+    "frontend/app/page.tsx",
+    "frontend/components/UploadForm.tsx",
+    "frontend/components/ResultsPanel.tsx",
+    "frontend/design_iterations/coffee-oracle-ui.md"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

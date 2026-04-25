@@ -1,0 +1,37 @@
+{
+  "id": "go-next-stack-05",
+  "seq": "05",
+  "title": "Scaffold Next.js TypeScript workspace",
+  "status": "pending",
+  "depends_on": ["01"],
+  "parallel": true,
+  "suggested_agent": "OpenFrontendSpecialist",
+  "context_files": [
+    ".opencode/context/ui/web/ui-styling-standards.md",
+    ".opencode/context/core/workflows/design-iteration-overview.md"
+  ],
+  "reference_files": [
+    "README.md",
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "Next.js 14+ app router created in frontend/ with TypeScript, Tailwind, Flowbite, ESLint, and testing config passing npm scripts",
+    "Environment handling exposes NEXT_PUBLIC_API_BASE with documented .env.local.example",
+    "Base layout defines Inter font, CoffeeOracle theme tokens, metadata, and shell components",
+    "`npm run dev`, `npm run build`, `npm run lint`, and `npm run test` succeed",
+    "Follows 4-stage design workflow",
+    "Responsive at all breakpoints"
+  ],
+  "deliverables": [
+    "frontend/package.json",
+    "frontend/next.config.js",
+    "frontend/tailwind.config.ts",
+    "frontend/postcss.config.js",
+    "frontend/app/layout.tsx",
+    "frontend/.env.local.example"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

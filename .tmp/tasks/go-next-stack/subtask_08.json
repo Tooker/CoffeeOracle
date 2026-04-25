@@ -1,0 +1,27 @@
+{
+  "id": "go-next-stack-08",
+  "seq": "08",
+  "title": "Document Go/Next stack usage and next steps",
+  "status": "pending",
+  "depends_on": ["04", "07"],
+  "parallel": false,
+  "suggested_agent": "DocsSpecialist",
+  "context_files": [],
+  "reference_files": [
+    "README.md",
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "`docs/go-next-stack.md` explains prerequisites, env variables, and commands to run backend and frontend together",
+    "Guide lists manual/automated tests (Go unit/integration, frontend unit/e2e) and how to execute them",
+    "Next steps outline deployment targets, security review items, and how to extend API",
+    "Links back to backend README and frontend design iteration doc"
+  ],
+  "deliverables": [
+    "docs/go-next-stack.md"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

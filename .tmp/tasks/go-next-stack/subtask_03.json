@@ -1,0 +1,28 @@
+{
+  "id": "go-next-stack-03",
+  "seq": "03",
+  "title": "Integrate OpenAI responses client and oracle handler",
+  "status": "pending",
+  "depends_on": ["02"],
+  "parallel": false,
+  "suggested_agent": "GoBackendEngineer",
+  "context_files": [],
+  "reference_files": [
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "OpenAI client streams gpt-5-nano responses using sanitized developer/user prompts mirroring Streamlit behavior",
+    "POST /api/oracle accepts JSON or multipart payload, resizes image to <=1024px, stores temp file securely and cleans up",
+    "Handler streams incremental output (SSE or chunked JSON) to callers and propagates errors with structured payloads",
+    "Service logs request lifecycle with PII-safe metadata and honours prompt-injection safeguards"
+  ],
+  "deliverables": [
+    "backend/internal/oracle/service.go",
+    "backend/internal/server/handlers/oracle.go",
+    "backend/internal/server/handlers/oracle_test.go"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

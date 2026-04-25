@@ -1,0 +1,30 @@
+{
+  "id": "go-next-stack-04",
+  "seq": "04",
+  "title": "Harden backend with middleware, tests, and docs",
+  "status": "pending",
+  "depends_on": ["03"],
+  "parallel": false,
+  "suggested_agent": "GoBackendEngineer",
+  "context_files": [],
+  "reference_files": [
+    "README.md",
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "CORS, logging, and request timeout middleware protect `/api/oracle` for the upcoming Next.js origin",
+    "Integration test with mocked OpenAI client exercises streaming path and validates sanitized output",
+    "`backend/README.md` documents prerequisites, env vars, run/test commands, and prompt-safety guarantees",
+    "Automated task (Makefile or Taskfile) runs vet, lint, and tests via single command"
+  ],
+  "deliverables": [
+    "backend/internal/server/middleware.go",
+    "backend/internal/server/middleware_test.go",
+    "backend/README.md",
+    "backend/Makefile"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

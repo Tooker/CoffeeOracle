@@ -1,0 +1,28 @@
+{
+  "id": "go-next-stack-02",
+  "seq": "02",
+  "title": "Implement request models and prompt-safety validation",
+  "status": "pending",
+  "depends_on": ["01"],
+  "parallel": false,
+  "suggested_agent": "GoBackendEngineer",
+  "context_files": [],
+  "reference_files": [
+    "streamlit_app.py"
+  ],
+  "acceptance_criteria": [
+    "Request DTO captures sanitized user name, creativity (0-10) and uploaded image metadata/base64 payload",
+    "Validator rejects missing files, oversized payloads and unsupported MIME types with descriptive 400 errors",
+    "Prompt injection guard strips script tags/URLs and enforces allowed character whitelist before OpenAI usage",
+    "Unit tests cover valid/invalid inputs plus sanitization edge cases"
+  ],
+  "deliverables": [
+    "backend/internal/oracle/models.go",
+    "backend/internal/oracle/validator.go",
+    "backend/internal/oracle/validator_test.go"
+  ],
+  "agent_id": null,
+  "started_at": null,
+  "completed_at": null,
+  "completion_summary": null
+}

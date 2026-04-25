@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-04-20T00:00:00Z",
+  "libraries": {
+    "home-assistant": {
+      "files": [
+        {
+          "filename": "lovelace-dashboards-and-battery-monitoring.md",
+          "topic": "Lovelace dashboards, sections view, battery monitoring",
+          "tech_stack": "Home Assistant",
+          "fetched": "2026-04-20T00:00:00Z",
+          "source": "Context7 API + official Home Assistant docs"
+        }
+      ]
+    }
+  }
+}
