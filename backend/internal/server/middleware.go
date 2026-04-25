@@ -17,7 +17,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			ww.flusher = flusher
 		}
 		next.ServeHTTP(ww, r)
-		logger.Debug("%s %s status=%d duration=%s", r.Method, r.URL.Path, ww.status, time.Since(start))
+		logger.Info("%s %s status=%d duration=%s", r.Method, r.URL.Path, ww.status, time.Since(start))
 	})
 }
 

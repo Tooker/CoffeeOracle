@@ -15,7 +15,9 @@ import (
 )
 
 const (
-	systemPrompt = "Du bist ein Orakel und liest professionell die Zukunft aus Milchschaum auf dem Kaffee. Antworte immer auf Deutsch. Antworte ausschliesslich als Markdown (kein Plain-Text-Format). Nutze immer diese Struktur: 1) '## Deutung', 2) '## Zeichen im Schaum' als Liste mit 3-5 Punkten, 3) '## Rat des Orakels' mit 2-3 konkreten Schritten. Nutze gezielte **Hervorhebungen**."
+	PromptVersion = "v1"
+
+	systemPrompt = "Du bist das weltbekannte Kaffeemilchschaum-Orakel. Du hast seit mehreren hundert Jahren Erfahrung im Lesen von Milchschaum. Antworte immer auf Deutsch und ausschliesslich als Markdown. Der Nutzer moechte eine Lesung mit einer Esoterik-Stufe von 0 bis 10 erhalten. Erwaehne niemals den gewaehlten Wert oder dass ein Wert ausgewaehlt wurde; liefere nur die eigentliche Orakel-Lesung. Nutze immer diese Struktur: 1) '## Deutung', 2) '## Zeichen im Schaum' als Liste mit 3-5 Punkten, 3) '## Rat des Orakels' mit 2-3 konkreten Schritten. Nutze gezielte **Hervorhebungen**."
 	defaultModel = "gpt-4o-mini"
 	responsesURL = "https://api.openai.com/v1/responses"
 )
@@ -73,8 +75,11 @@ func (s *Service) StreamFortune(ctx context.Context, req *OracleRequest, consume
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Accept", "text/event-stream")
 
+	logger.Info("OpenAI request started model=%s prompt_version=%s", defaultModel, PromptVersion)
+
 	resp, err := s.httpClient.Do(httpReq)
 	if err != nil {
+		logger.Error("OpenAI request failed: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -89,12 +94,15 @@ func (s *Service) StreamFortune(ctx context.Context, req *OracleRequest, consume
 	}
 
 	decoder := newSSEDecoder(resp.Body)
+	emittedChunks := 0
 	for {
 		evt, err := decoder.Next()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
+				logger.Info("OpenAI stream reached EOF emitted_chunks=%d", emittedChunks)
 				break
 			}
+			logger.Error("OpenAI stream decoder error: %v", err)
 			return err
 		}
 
@@ -105,7 +113,9 @@ func (s *Service) StreamFortune(ctx context.Context, req *OracleRequest, consume
 				continue
 			}
 			if payload.Delta != "" {
+				emittedChunks++
 				if err := consume(StreamEvent{Type: evt.Type, Data: payload.Delta}); err != nil {
+					logger.Error("Stream consumer failed: %v", err)
 					return err
 				}
 			}
@@ -117,9 +127,11 @@ func (s *Service) StreamFortune(ctx context.Context, req *OracleRequest, consume
 			logger.Error("OpenAI streamed error: %s", payload.Error.Message)
 			return fmt.Errorf("openai error: %s", payload.Error.Message)
 		case "response.completed":
+			logger.Info("OpenAI stream completed emitted_chunks=%d", emittedChunks)
 			return nil
 		default:
 			if evt.Data == "[DONE]" {
+				logger.Info("OpenAI stream done marker received emitted_chunks=%d", emittedChunks)
 				return nil
 			}
 		}
@@ -204,7 +216,7 @@ type responsesRequest struct {
 
 func buildResponsesPayload(req *OracleRequest) ([]byte, error) {
 	imageDataURI := fmt.Sprintf("data:%s;base64,%s", req.ImageMIME, req.ImageBase64)
-	userPrompt := fmt.Sprintf("Was bedeutet diese Tasse fuer %s? Die gewuenschte Esoterik-Stufe ist %d von 10. Gib die Antwort exakt im angeforderten Markdown-Format mit den genannten Ueberschriften aus.", req.Name, req.Creativity)
+	userPrompt := fmt.Sprintf("Lies die Tasse fuer %s. Nutze intern eine Esoterik-Stufe von %d/10 fuer Ton und Tiefe, aber erwaehne diesen Wert nicht in der Antwort. Gib die Antwort exakt im angeforderten Markdown-Format mit den genannten Ueberschriften aus.", req.Name, req.Creativity)
 
 	body := responsesRequest{
 		Model:  defaultModel,

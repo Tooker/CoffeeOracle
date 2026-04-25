@@ -17,6 +17,7 @@ import (
 	_ "golang.org/x/image/webp"
 
 	"github.com/tobiasheinloth/CoffeeOracle/backend/internal/oracle"
+	"github.com/tobiasheinloth/CoffeeOracle/backend/internal/logger"
 )
 
 const maxUploadBytes = 10 * 1024 * 1024
@@ -54,6 +55,16 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info(
+		"oracle request received name=%q creativity=%d image_mime=%q image_name=%q remote=%q prompt_version=%s",
+		req.Name,
+		req.Creativity,
+		req.ImageMIME,
+		req.ImageName,
+		r.RemoteAddr,
+		oracle.PromptVersion,
+	)
+
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		writeError(w, http.StatusInternalServerError, errors.New("streaming not supported"))
@@ -77,12 +88,14 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if err != nil {
+		logger.Error("oracle request failed name=%q error=%v", req.Name, err)
 		writeStreamError(w, flusher, err)
 		return
 	}
 
 	fmt.Fprint(w, "event: complete\ndata: done\n\n")
 	flusher.Flush()
+	logger.Info("oracle request completed name=%q", req.Name)
 }
 
 func (h *OracleHandler) parseRequest(r *http.Request) (oracle.OracleRequest, error) {
