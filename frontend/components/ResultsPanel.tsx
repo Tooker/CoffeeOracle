@@ -20,7 +20,7 @@ export function ResultsPanel({
 }: ResultsPanelProps) {
   return (
     <aside
-      className={`space-y-6 rounded-3xl border border-white/10 bg-coffee-bean/70 text-sm text-coffee-foam/80 ${expanded ? "oracle-panel-enter p-4 sm:p-8 md:p-10" : "p-4 sm:p-6"}`}
+      className={`space-y-5 rounded-3xl border-0 bg-coffee-bean/70 text-sm text-coffee-foam/80 lg:border lg:border-white/10 ${expanded ? "oracle-panel-enter p-2 sm:p-4 md:p-8" : "p-2 sm:p-4"}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -40,10 +40,10 @@ export function ResultsPanel({
         ) : null}
       </div>
       <div
-        className={`space-y-3 rounded-2xl border border-white/10 bg-black/30 ${expanded ? "min-h-[280px] p-4 sm:min-h-[320px] sm:p-6 md:p-8" : "min-h-[180px] p-4"}`}
+        className={`space-y-3 rounded-2xl border-0 bg-black/30 lg:border lg:border-white/10 ${expanded ? "min-h-[280px] p-2 sm:min-h-[320px] sm:p-3 md:p-6" : "min-h-[180px] p-2 sm:p-3"}`}
       >
         {previewImageUrl ? (
-          <figure className="overflow-hidden rounded-xl border border-white/10 bg-black/30">
+          <figure className="overflow-hidden rounded-xl border-0 bg-black/30 lg:border lg:border-white/10">
             <img
               src={previewImageUrl}
               alt="Hochgeladenes Kaffeeschaumbild"

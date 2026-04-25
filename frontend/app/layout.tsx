@@ -4,8 +4,6 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-const year = new Date().getFullYear();
-
 export const metadata: Metadata = {
   title: "CoffeeOracle",
   description:
@@ -22,14 +20,13 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} antialiased`}>
       <body className="bg-coffee-night text-coffee-foam">
         <div className="flex min-h-screen flex-col bg-coffee-radial">
-          <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6 sm:px-6 sm:py-12">
+          <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-1 py-3 sm:px-3 sm:py-7 lg:px-6 lg:py-12">
             {children}
           </main>
 
           <footer className="border-t border-white/5 bg-coffee-night/80">
-            <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 text-sm text-coffee-foam/60">
-              <span>© {year} CoffeeOracle Labs</span>
-              <span>Made with Next.js · Tailwind · Flowbite</span>
+            <div className="mx-auto flex w-full max-w-6xl items-center justify-center px-4 py-5 text-sm text-coffee-foam/60">
+              <span>CoffeeOracle Labs</span>
             </div>
           </footer>
         </div>

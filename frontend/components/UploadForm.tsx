@@ -89,7 +89,7 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
         >
           Kaffeeschaumfoto
         </label>
-        <div className="rounded-2xl border border-dashed border-coffee-crema/35 bg-gradient-to-r from-white/5 via-white/[0.03] to-white/5 p-4">
+        <div className="rounded-2xl border border-coffee-crema/20 bg-gradient-to-r from-white/5 via-white/[0.03] to-white/5 p-4">
           <input
             key={fileInputResetKey}
             ref={fileInputRef}
