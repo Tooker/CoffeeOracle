@@ -2,7 +2,7 @@ import { OracleExperience } from "@/components/OracleExperience";
 
 export default function Home() {
   return (
-    <section className="space-y-8 rounded-3xl border border-white/10 bg-coffee-night/80 p-8 shadow-oracle">
+    <section className="space-y-6 rounded-3xl border border-white/10 bg-coffee-night/80 p-4 shadow-oracle sm:space-y-8 sm:p-8">
       <div className="space-y-4">
         <p className="text-sm uppercase tracking-[0.4em] text-coffee-crema">Coffee Oracle</p>
         <h1 className="text-4xl font-semibold leading-tight text-coffee-foam sm:text-5xl">

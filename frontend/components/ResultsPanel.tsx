@@ -20,12 +20,12 @@ export function ResultsPanel({
 }: ResultsPanelProps) {
   return (
     <aside
-      className={`space-y-6 rounded-3xl border border-white/10 bg-coffee-bean/70 text-sm text-coffee-foam/80 ${expanded ? "oracle-panel-enter p-8 md:p-10" : "p-6"}`}
+      className={`space-y-6 rounded-3xl border border-white/10 bg-coffee-bean/70 text-sm text-coffee-foam/80 ${expanded ? "oracle-panel-enter p-4 sm:p-8 md:p-10" : "p-4 sm:p-6"}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-coffee-crema">Orakel-Ausgabe</p>
-          <p className={`${expanded ? "text-2xl md:text-3xl" : "text-lg"} font-semibold text-white`}>
+          <p className={`${expanded ? "text-xl sm:text-2xl md:text-3xl" : "text-lg"} font-semibold text-white`}>
             Prophezeiung
           </p>
         </div>
@@ -40,7 +40,7 @@ export function ResultsPanel({
         ) : null}
       </div>
       <div
-        className={`space-y-3 rounded-2xl border border-white/10 bg-black/30 ${expanded ? "min-h-[320px] p-6 md:p-8" : "min-h-[180px] p-4"}`}
+        className={`space-y-3 rounded-2xl border border-white/10 bg-black/30 ${expanded ? "min-h-[280px] p-4 sm:min-h-[320px] sm:p-6 md:p-8" : "min-h-[180px] p-4"}`}
       >
         {previewImageUrl ? (
           <figure className="overflow-hidden rounded-xl border border-white/10 bg-black/30">
@@ -59,13 +59,13 @@ export function ResultsPanel({
           <p className="text-red-200">{error}</p>
         ) : streamingText ? (
           <div className="space-y-3">
-            <div className={`space-y-3 text-coffee-foam ${expanded ? "text-lg" : ""}`}>
+            <div className={`space-y-3 text-coffee-foam ${expanded ? "sm:text-lg" : ""}`}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({ ...props }) => <h1 className="text-2xl font-semibold text-white md:text-3xl" {...props} />,
-                  h2: ({ ...props }) => <h2 className="text-xl font-semibold text-white md:text-2xl" {...props} />,
-                  h3: ({ ...props }) => <h3 className="text-lg font-semibold text-white md:text-xl" {...props} />,
+                  h1: ({ ...props }) => <h1 className="text-xl font-semibold text-white sm:text-2xl md:text-3xl" {...props} />,
+                  h2: ({ ...props }) => <h2 className="text-lg font-semibold text-white sm:text-xl md:text-2xl" {...props} />,
+                  h3: ({ ...props }) => <h3 className="text-base font-semibold text-white sm:text-lg md:text-xl" {...props} />,
                   p: ({ ...props }) => <p className="leading-relaxed" {...props} />,
                   ul: ({ ...props }) => <ul className="list-disc space-y-1 pl-6" {...props} />,
                   ol: ({ ...props }) => <ol className="list-decimal space-y-1 pl-6" {...props} />,
