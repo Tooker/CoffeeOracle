@@ -27,6 +27,45 @@ func TestValidateRequestSuccess(t *testing.T) {
 	}
 }
 
+// TestValidateRequestAcceptsQuestionMode verifies concrete questions are sanitized and accepted.
+func TestValidateRequestAcceptsQuestionMode(t *testing.T) {
+	payload := base64.StdEncoding.EncodeToString([]byte("hello"))
+	req := &OracleRequest{
+		Name:         "Alex",
+		Creativity:   7,
+		QuestionMode: true,
+		Question:     "<script>alert('x')</script> Soll ich das Projekt wagen? https://evil.test",
+		ImageName:    "cup.png",
+		ImageMIME:    "image/png",
+		ImageBase64:  payload,
+	}
+
+	if err := ValidateRequest(req); err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+
+	if req.Question != "Soll ich das Projekt wagen?" {
+		t.Fatalf("unexpected sanitized question: %q", req.Question)
+	}
+}
+
+// TestValidateRequestRequiresQuestionWhenEnabled blocks empty question mode submissions.
+func TestValidateRequestRequiresQuestionWhenEnabled(t *testing.T) {
+	payload := base64.StdEncoding.EncodeToString([]byte("hello"))
+	req := &OracleRequest{
+		Name:         "Alex",
+		Creativity:   7,
+		QuestionMode: true,
+		ImageName:    "cup.png",
+		ImageMIME:    "image/png",
+		ImageBase64:  payload,
+	}
+
+	if err := ValidateRequest(req); err == nil {
+		t.Fatal("expected error for missing question")
+	}
+}
+
 // TestValidateRequestSanitizesName confirms unsafe name fragments are removed.
 func TestValidateRequestSanitizesName(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString([]byte("hello"))

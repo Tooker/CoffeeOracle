@@ -64,9 +64,10 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info(
-		"oracle request received name=%q creativity=%d image_mime=%q image_url=%q remote=%q prompt_version=%s",
+		"oracle request received name=%q creativity=%d question_mode=%t image_mime=%q image_url=%q remote=%q prompt_version=%s",
 		req.Name,
 		req.Creativity,
+		req.QuestionMode,
 		req.ImageMIME,
 		imageURL(req.ImageName),
 		r.RemoteAddr,
@@ -105,7 +106,7 @@ func (h *OracleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shareURL, err := persistReading(fortune.String(), req.ImageName)
+	shareURL, err := persistReading(fortune.String(), req.ImageName, req.Question)
 	if err != nil {
 		logger.Error("oracle share persistence failed name=%q error=%v", req.Name, err)
 	} else if err := writeSSEJSONEvent(w, "share", map[string]string{"url": shareURL}); err != nil {
@@ -152,8 +153,10 @@ func (h *OracleHandler) parseForm(r *http.Request) (oracle.OracleRequest, error)
 	}
 	creativity, _ := strconv.Atoi(r.FormValue("creativity"))
 	return oracle.OracleRequest{
-		Name:       r.FormValue("name"),
-		Creativity: creativity,
+		Name:         r.FormValue("name"),
+		Creativity:   creativity,
+		QuestionMode: parseBool(r.FormValue("questionMode")),
+		Question:     r.FormValue("question"),
 	}, nil
 }
 
@@ -185,12 +188,19 @@ func (h *OracleHandler) parseMultipart(r *http.Request) (oracle.OracleRequest, e
 	}
 
 	return oracle.OracleRequest{
-		Name:        r.FormValue("name"),
-		Creativity:  creativity,
-		ImageName:   imageName,
-		ImageMIME:   processedMIME,
-		ImageBase64: base64.StdEncoding.EncodeToString(processed),
+		Name:         r.FormValue("name"),
+		Creativity:   creativity,
+		QuestionMode: parseBool(r.FormValue("questionMode")),
+		Question:     r.FormValue("question"),
+		ImageName:    imageName,
+		ImageMIME:    processedMIME,
+		ImageBase64:  base64.StdEncoding.EncodeToString(processed),
 	}, nil
+}
+
+// parseBool accepts the HTML form values emitted by the frontend checkbox mode.
+func parseBool(value string) bool {
+	return value == "true" || value == "1" || value == "on"
 }
 
 // resizeAndPersistImage normalizes uploaded images to a reasonable max size.
@@ -244,7 +254,7 @@ func persistImage(data []byte) (string, error) {
 }
 
 // persistReading stores the markdown fortune and returns its public share URL.
-func persistReading(markdown string, imageName string) (string, error) {
+func persistReading(markdown string, imageName string, question string) (string, error) {
 	if err := os.MkdirAll(readingStoreDir, 0o755); err != nil {
 		return "", err
 	}
@@ -254,7 +264,7 @@ func persistReading(markdown string, imageName string) (string, error) {
 		return "", err
 	}
 
-	content := buildReadingMarkdown(markdown, imageName)
+	content := buildReadingMarkdown(markdown, imageName, question)
 	if err := os.WriteFile(filepath.Join(readingStoreDir, id+".md"), []byte(content), 0o644); err != nil {
 		return "", err
 	}
@@ -263,13 +273,18 @@ func persistReading(markdown string, imageName string) (string, error) {
 }
 
 // buildReadingMarkdown keeps the share artifact useful even outside the web UI.
-func buildReadingMarkdown(markdown string, imageName string) string {
+func buildReadingMarkdown(markdown string, imageName string, question string) string {
 	var out strings.Builder
 	out.WriteString("# CoffeeOracle Lesung\n\n")
 	if imageName != "" {
 		out.WriteString("![Hochgeladenes Kaffeeschaumbild](")
 		out.WriteString(imageURL(imageName))
 		out.WriteString(")\n\n")
+	}
+	if strings.TrimSpace(question) != "" {
+		out.WriteString("> Frage: ")
+		out.WriteString(strings.TrimSpace(question))
+		out.WriteString("\n\n")
 	}
 	out.WriteString(strings.TrimSpace(markdown))
 	out.WriteString("\n")

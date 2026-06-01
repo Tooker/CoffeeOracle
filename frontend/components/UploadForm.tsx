@@ -5,6 +5,8 @@ import { useEffect, useId, useRef, useState } from "react";
 export type UploadPayload = {
   name: string;
   creativity: number;
+  questionMode: boolean;
+  question: string;
   file: File;
 };
 
@@ -26,6 +28,8 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [name, setName] = useState("");
   const [creativity, setCreativity] = useState(5);
+  const [questionMode, setQuestionMode] = useState(false);
+  const [question, setQuestion] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileInputResetKey, setFileInputResetKey] = useState(0);
@@ -41,7 +45,12 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
       return;
     }
 
-    onSubmit?.({ name: name.trim(), creativity, file });
+    if (questionMode && question.trim().length === 0) {
+      setError("Bitte stelle eine konkrete Frage oder deaktiviere den Frage-Modus.");
+      return;
+    }
+
+    onSubmit?.({ name: name.trim(), creativity, questionMode, question: question.trim(), file });
   };
 
   // enableMotionControl asks the browser for motion access, then lets device tilt drive the slider.
@@ -153,6 +162,43 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
         </div>
       </div>
 
+      <div className="space-y-3 rounded-2xl border border-coffee-crema/20 bg-white/[0.03] p-4">
+        <label className="flex items-start gap-3 text-coffee-foam">
+          <input
+            type="checkbox"
+            checked={questionMode}
+            onChange={(event) => setQuestionMode(event.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-white/30 bg-black/20 text-coffee-crema focus:ring-coffee-crema/40"
+          />
+          <span>
+            <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-coffee-crema">
+              Konkrete Frage
+            </span>
+            <span className="mt-1 block text-sm text-coffee-foam/70">
+              Das Orakel antwortet gezielt auf eine Frage statt nur frei zu deuten.
+            </span>
+          </span>
+        </label>
+
+        {questionMode ? (
+          <div className="space-y-2">
+            <label htmlFor={`${formId}-question`} className="sr-only">
+              Deine Frage an das Orakel
+            </label>
+            <textarea
+              id={`${formId}-question`}
+              maxLength={280}
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              required={questionMode}
+              placeholder="z. B. Soll ich das neue Projekt wagen?"
+              className="min-h-28 w-full resize-y rounded-xl border border-white/25 bg-black/20 px-4 py-3 text-base text-coffee-foam placeholder:text-coffee-foam/40 outline-none transition focus:border-coffee-crema/80 focus:ring-2 focus:ring-coffee-crema/30"
+            />
+            <p className="text-right text-xs text-coffee-foam/55">{question.length} / 280</p>
+          </div>
+        ) : null}
+      </div>
+
       <div className="space-y-3">
         <label
           htmlFor={`${formId}-file`}
@@ -206,6 +252,8 @@ export function UploadForm({ onSubmit, onReset, isSubmitting = false }: UploadFo
           onClick={() => {
             setName("");
             setCreativity(5);
+            setQuestionMode(false);
+            setQuestion("");
             setFile(null);
             setError(null);
             setFileInputResetKey((prev) => prev + 1);

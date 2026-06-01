@@ -2,9 +2,12 @@ package oracle
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -38,5 +41,67 @@ func TestServiceStreamFortune(t *testing.T) {
 
 	if output != "Hallo" {
 		t.Fatalf("unexpected output: %s", output)
+	}
+}
+
+// TestBuildResponsesPayloadIncludesQuestionModePrompt verifies concrete questions reach the model prompt.
+func TestBuildResponsesPayloadIncludesQuestionModePrompt(t *testing.T) {
+	req := &OracleRequest{
+		Name:         "Alex",
+		Creativity:   5,
+		QuestionMode: true,
+		Question:     "Soll ich das neue Projekt wagen?",
+		ImageName:    "cup.png",
+		ImageMIME:    "image/png",
+		ImageBase64:  "aGVsbG8=",
+	}
+
+	body, err := buildResponsesPayload(req)
+	if err != nil {
+		t.Fatalf("expected payload, got %v", err)
+	}
+
+	var payload responsesRequest
+	if err := json.Unmarshal(body, &payload); err != nil {
+		t.Fatalf("expected JSON payload, got %v", err)
+	}
+
+	prompt := payload.Input[0].Content[0].Text
+	if !strings.Contains(prompt, req.Question) {
+		t.Fatalf("expected prompt to contain question, got %s", prompt)
+	}
+	if !strings.Contains(prompt, "Beantworte diese Frage direkt") {
+		t.Fatalf("expected question-mode instruction, got %s", prompt)
+	}
+}
+
+// TestServiceStreamFortuneSendsQuestionPayload checks the outbound request includes question prompt content.
+func TestServiceStreamFortuneSendsQuestionPayload(t *testing.T) {
+	requestBody := ""
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		requestBody = string(raw)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintf(w, "event: response.completed\ndata: {}\n\n")
+	}))
+	defer server.Close()
+
+	svc := NewServiceWithHTTPClient("sk-test", server.Client(), server.URL)
+	req := &OracleRequest{
+		Name:         "Alex",
+		Creativity:   5,
+		QuestionMode: true,
+		Question:     "Was soll ich beachten?",
+		ImageName:    "cup.png",
+		ImageMIME:    "image/png",
+		ImageBase64:  "aGVsbG8=",
+	}
+
+	if err := svc.StreamFortune(context.Background(), req, func(evt StreamEvent) error { return nil }); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if !strings.Contains(requestBody, req.Question) {
+		t.Fatalf("expected request body to include question, got %s", requestBody)
 	}
 }

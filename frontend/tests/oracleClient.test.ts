@@ -1,5 +1,7 @@
 import {
   sanitizeOracleName,
+  sanitizeOracleQuestion,
+  buildOracleFormData,
   drainSSEBuffer,
   mockSSEChunk,
 } from "@/lib/api/oracleClient";
@@ -15,6 +17,37 @@ describe("sanitizeOracleName", () => {
   it("truncates to 64 characters", () => {
     const long = "a".repeat(80);
     expect(sanitizeOracleName(long)).toHaveLength(64);
+  });
+});
+
+describe("sanitizeOracleQuestion", () => {
+  // Verifies concrete German questions keep useful punctuation and remove noisy content.
+  it("strips scripts and urls while preserving question punctuation", () => {
+    const dirty = "<script>alert(1)</script> Soll ich wechseln? https://evil.com";
+    expect(sanitizeOracleQuestion(dirty)).toBe("Soll ich wechseln?");
+  });
+
+  // Ensures client-side question length policy matches backend limits.
+  it("truncates to 280 characters", () => {
+    const long = "a".repeat(320);
+    expect(sanitizeOracleQuestion(long)).toHaveLength(280);
+  });
+});
+
+describe("buildOracleFormData", () => {
+  // Confirms the optional question mode is encoded for the backend multipart handler.
+  it("includes question mode and sanitized question", () => {
+    const file = new File(["image"], "cup.jpg", { type: "image/jpeg" });
+    const data = buildOracleFormData({
+      name: "Alex",
+      creativity: 5,
+      questionMode: true,
+      question: "<script>alert(1)</script> Was kommt?",
+      file,
+    });
+
+    expect(data.get("questionMode")).toBe("true");
+    expect(data.get("question")).toBe("Was kommt?");
   });
 });
 

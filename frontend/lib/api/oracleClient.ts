@@ -3,6 +3,8 @@ import { apiBaseUrl } from "@/lib/env";
 export type OracleUploadPayload = {
   name: string;
   creativity: number;
+  questionMode?: boolean;
+  question?: string;
   file: File;
 };
 
@@ -31,7 +33,9 @@ type CurrentParsedEvent = {
 const SCRIPT_REGEX = /<script.*?>[\s\S]*?<\/script>/gi;
 const URL_REGEX = /https?:\/\/\S+/gi;
 const DISALLOWED_REGEX = /[^a-zA-Z0-9\s\-_'.,äöüÄÖÜß]/g;
+const DISALLOWED_QUESTION_REGEX = /[^a-zA-Z0-9\s\-_'.,?!:;()äöüÄÖÜß]/g;
 const MAX_NAME_LENGTH = 64;
+const MAX_QUESTION_LENGTH = 280;
 
 // sanitizeOracleName strips unsafe or unsupported characters before sending user name to backend.
 export function sanitizeOracleName(input: string): string {
@@ -43,12 +47,28 @@ export function sanitizeOracleName(input: string): string {
   return cleaned.slice(0, MAX_NAME_LENGTH);
 }
 
+// sanitizeOracleQuestion keeps normal questions readable while removing noisy prompt-injection content.
+export function sanitizeOracleQuestion(input: string): string {
+  const cleaned = input
+    .replace(SCRIPT_REGEX, "")
+    .replace(URL_REGEX, "")
+    .replace(DISALLOWED_QUESTION_REGEX, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned.slice(0, MAX_QUESTION_LENGTH);
+}
+
 // buildOracleFormData prepares multipart form payload in the format expected by /api/oracle.
 export function buildOracleFormData(payload: OracleUploadPayload): FormData {
   const data = new FormData();
   data.append("name", sanitizeOracleName(payload.name));
   const boundedCreativity = Math.min(10, Math.max(0, payload.creativity));
   data.append("creativity", String(boundedCreativity));
+  const questionMode = Boolean(payload.questionMode);
+  data.append("questionMode", String(questionMode));
+  if (questionMode) {
+    data.append("question", sanitizeOracleQuestion(payload.question ?? ""));
+  }
   data.append("file", payload.file);
   return data;
 }

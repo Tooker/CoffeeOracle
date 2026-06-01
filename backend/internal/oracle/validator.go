@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	minCreativity = 0
-	maxCreativity = 10
-	maxImageBytes = 5 * 1024 * 1024 // 5MB
-	maxNameLength = 64
+	minCreativity     = 0
+	maxCreativity     = 10
+	maxImageBytes     = 5 * 1024 * 1024 // 5MB
+	maxNameLength     = 64
+	maxQuestionLength = 280
 )
 
 var (
@@ -22,9 +23,10 @@ var (
 		"image/webp": {},
 	}
 
-	scriptTagPattern = regexp.MustCompile(`(?is)<script.*?>.*?</script>`)
-	urlPattern       = regexp.MustCompile(`(?i)https?://\S+`)
-	disallowedChars  = regexp.MustCompile(`[^a-zA-Z0-9\s\-_'.,]`)
+	scriptTagPattern        = regexp.MustCompile(`(?is)<script.*?>.*?</script>`)
+	urlPattern              = regexp.MustCompile(`(?i)https?://\S+`)
+	disallowedChars         = regexp.MustCompile(`[^a-zA-Z0-9\s\-_'.,]`)
+	disallowedQuestionChars = regexp.MustCompile(`[^a-zA-Z0-9\s\-_'.,?!:;()äöüÄÖÜß]`)
 )
 
 // ValidationError represents a structured validation failure for user inputs.
@@ -54,6 +56,11 @@ func ValidateRequest(req *OracleRequest) error {
 
 	if req.Creativity < minCreativity || req.Creativity > maxCreativity {
 		return ValidationError{Field: "creativity", Message: "must be between 0 and 10"}
+	}
+
+	req.Question = sanitizeQuestion(req.Question)
+	if req.QuestionMode && req.Question == "" {
+		return ValidationError{Field: "question", Message: "question is required when question mode is enabled"}
 	}
 
 	if req.ImageBase64 == "" {
@@ -95,4 +102,16 @@ func sanitizeName(input string) string {
 		normalized = normalized[:maxNameLength]
 	}
 	return normalized
+}
+
+// sanitizeQuestion removes prompt-injection noise while preserving normal German questions.
+func sanitizeQuestion(input string) string {
+	normalized := scriptTagPattern.ReplaceAllString(input, "")
+	normalized = urlPattern.ReplaceAllString(normalized, "")
+	normalized = disallowedQuestionChars.ReplaceAllString(normalized, "")
+	normalized = strings.Join(strings.Fields(normalized), " ")
+	if len(normalized) > maxQuestionLength {
+		normalized = normalized[:maxQuestionLength]
+	}
+	return strings.TrimSpace(normalized)
 }

@@ -37,11 +37,13 @@ func TestOracleHandlerJSONSuccess(t *testing.T) {
 
 	img := base64.StdEncoding.EncodeToString([]byte("image"))
 	body := map[string]any{
-		"name":        "Alex",
-		"creativity":  5,
-		"imageName":   "cup.png",
-		"imageMime":   "image/png",
-		"imageBase64": img,
+		"name":         "Alex",
+		"creativity":   5,
+		"questionMode": true,
+		"question":     "Was wartet auf mich?",
+		"imageName":    "cup.png",
+		"imageMime":    "image/png",
+		"imageBase64":  img,
 	}
 	b, _ := json.Marshal(body)
 	req := httptest.NewRequest(http.MethodPost, "/api/oracle", bytes.NewReader(b))
@@ -60,6 +62,9 @@ func TestOracleHandlerJSONSuccess(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "data: Hello") {
 		t.Fatalf("expected stream chunk, got %s", rec.Body.String())
+	}
+	if svc.req == nil || !svc.req.QuestionMode || svc.req.Question != "Was wartet auf mich?" {
+		t.Fatalf("expected question mode request, got %#v", svc.req)
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	PromptVersion = "v3"
+	PromptVersion = "v4"
 
 	defaultModel = "gpt-5.4-nano"
 	responsesURL = "https://api.openai.com/v1/responses"
@@ -233,6 +233,17 @@ type responsesRequest struct {
 // It embeds the uploaded image as data URL and constructs the German oracle prompt.
 func buildResponsesPayload(req *OracleRequest) ([]byte, error) {
 	imageDataURI := fmt.Sprintf("data:%s;base64,%s", req.ImageMIME, req.ImageBase64)
+	questionInstructions := `- Erstelle danach auf Grundlage des sichtbaren Milchschaums eine passende Orakel-Lesung.`
+	questionContext := ""
+	if req.QuestionMode && req.Question != "" {
+		questionInstructions = fmt.Sprintf(`- Der Nutzer hat eine konkrete Frage gestellt: %q
+- Beantworte diese Frage direkt aus der Deutung des sichtbaren Milchschaums.
+- Beginne trotzdem mit einer kurzen Deutung des im Schaum erkennbaren Bildes oder Musters.
+- Gib danach eine klare, hilfreiche Antwort auf die Frage.
+- Wenn die Frage nicht direkt entscheidbar ist, formuliere eine deutende Antwort mit vorsichtigem Rat statt einer absoluten Vorhersage.`, req.Question)
+		questionContext = fmt.Sprintf("\n- Die konkrete Frage des Nutzers lautet: %q", req.Question)
+	}
+
 	developerPrompt := fmt.Sprintf(`# Rolle und Ziel
 Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Erfahrung im Lesen von Milchschaum.
 
@@ -242,8 +253,8 @@ Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Er
 - Dem Modell wird ein Bild von einer Tasse geliefert.
 - Prüfe zuerst, ob auf dem Bild Milchschaum zu erkennen ist.
 - Falls kein Milchschaum zu erkennen ist, antworte exakt: %q
-- Falls Milchschaum zu erkennen ist, beginne mit einer kurzen Deutung des im Schaum erkennbaren Bildes oder Musters.
-- Erstelle danach auf Grundlage des sichtbaren Milchschaums eine passende Orakel-Lesung.
+- Falls Milchschaum zu erkennen ist:
+%s
 - Erwähne **nicht**, welchen Wert der Nutzer gewählt hat.
 - Erwähne **nicht** den Esoterik-Wert in der Antwort.
 - Gib **nur** das eigentliche Orakel aus.
@@ -251,13 +262,13 @@ Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Er
 # Kontext
 - Die Lesung soll sich wie eine echte Deutung aus dem Kaffeemilchschaum anfühlen.
 - Der Nutzername %q ist als Kontext gegeben.
-- Die Deutung soll sich auf das gelieferte Bild der Tasse mit Milchschaum beziehen.
+- Die Deutung soll sich auf das gelieferte Bild der Tasse mit Milchschaum beziehen.%s
 
 # Ausgabeformat
 - Der Output soll als nett formatierter Markdown-Text erscheinen.
 
 # Verbosität
-- Formuliere stimmungsvoll, direkt und passend zum Charakter eines Orakels.`, req.Name, req.Creativity, "Ich kann hier keinen Milchschaum erkennen.", req.Name)
+- Formuliere stimmungsvoll, direkt und passend zum Charakter eines Orakels.`, req.Name, req.Creativity, "Ich kann hier keinen Milchschaum erkennen.", questionInstructions, req.Name, questionContext)
 
 	body := responsesRequest{
 		Model:     defaultModel,
