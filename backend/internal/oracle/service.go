@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	PromptVersion = "v4"
+	PromptVersion = "v5"
 
-	defaultModel = "gpt-5.4-nano"
+	defaultModel = "gpt-5.5-nano"
 	responsesURL = "https://api.openai.com/v1/responses"
 )
 
@@ -233,15 +233,16 @@ type responsesRequest struct {
 // It embeds the uploaded image as data URL and constructs the German oracle prompt.
 func buildResponsesPayload(req *OracleRequest) ([]byte, error) {
 	imageDataURI := fmt.Sprintf("data:%s;base64,%s", req.ImageMIME, req.ImageBase64)
-	questionInstructions := `- Erstelle danach auf Grundlage des sichtbaren Milchschaums eine passende Orakel-Lesung.`
-	questionContext := ""
-	if req.QuestionMode && req.Question != "" {
-		questionInstructions = fmt.Sprintf(`- Der Nutzer hat eine konkrete Frage gestellt: %q
-- Beantworte diese Frage direkt aus der Deutung des sichtbaren Milchschaums.
-- Beginne trotzdem mit einer kurzen Deutung des im Schaum erkennbaren Bildes oder Musters.
-- Gib danach eine klare, hilfreiche Antwort auf die Frage.
-- Wenn die Frage nicht direkt entscheidbar ist, formuliere eine deutende Antwort mit vorsichtigem Rat statt einer absoluten Vorhersage.`, req.Question)
-		questionContext = fmt.Sprintf("\n- Die konkrete Frage des Nutzers lautet: %q", req.Question)
+	modeInstructions := `- Modus: freie Kaffeeschaum-Lesung.
+- Beginne mit einer knappen Deutung des sichtbaren Musters.
+- Erstelle danach eine passende Orakel-Lesung aus dem Milchschaum.
+- Schließe mit einem kurzen, handlungsnahen Rat.`
+	if req.QuestionMode {
+		modeInstructions = `- Modus: konkrete Frage beantworten.
+- Beginne mit einer knappen Deutung des sichtbaren Musters.
+- Gib danach eine direkte Antwort auf die gestellte Frage.
+- Schließe mit einem kurzen Rat oder nächsten Schritt.
+- Wenn die Frage aus dem Bild nicht direkt entscheidbar ist, formuliere eine deutende Antwort mit vorsichtigem Rat statt einer absoluten Vorhersage.`
 	}
 
 	developerPrompt := fmt.Sprintf(`# Rolle und Ziel
@@ -255,6 +256,8 @@ Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Er
 - Falls kein Milchschaum zu erkennen ist, antworte exakt: %q
 - Falls Milchschaum zu erkennen ist:
 %s
+- Nenne 1-3 sichtbare Formen, Kontraste oder Muster aus dem Milchschaum.
+- Erfinde keine Details, die im Bild nicht plausibel sichtbar sind.
 - Erwähne **nicht**, welchen Wert der Nutzer gewählt hat.
 - Erwähne **nicht** den Esoterik-Wert in der Antwort.
 - Gib **nur** das eigentliche Orakel aus.
@@ -262,13 +265,22 @@ Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Er
 # Kontext
 - Die Lesung soll sich wie eine echte Deutung aus dem Kaffeemilchschaum anfühlen.
 - Der Nutzername %q ist als Kontext gegeben.
-- Die Deutung soll sich auf das gelieferte Bild der Tasse mit Milchschaum beziehen.%s
+- Die Deutung soll sich auf das gelieferte Bild der Tasse mit Milchschaum beziehen.
+- Nutze den Esoterik-Wert nur zur Tonalität: %s
 
 # Ausgabeformat
 - Der Output soll als nett formatierter Markdown-Text erscheinen.
+- Schreibe 120-220 Wörter.
+- Verwende maximal 2 kurze Markdown-Abschnitte.
 
 # Verbosität
-- Formuliere stimmungsvoll, direkt und passend zum Charakter eines Orakels.`, req.Name, req.Creativity, "Ich kann hier keinen Milchschaum erkennen.", questionInstructions, req.Name, questionContext)
+- Formuliere stimmungsvoll, direkt und passend zum Charakter eines Orakels.
+- Bei medizinischen, rechtlichen, finanziellen oder sicherheitsrelevanten Fragen: antworte symbolisch und vorsichtig, gib keine verbindliche Fachentscheidung.`, req.Name, req.Creativity, "Ich kann hier keinen Milchschaum erkennen.", modeInstructions, req.Name, creativityTone(req.Creativity))
+
+	userContent := []responsesContent{
+		{Type: "input_text", Text: buildUserContext(req)},
+		{Type: "input_image", ImageURL: imageDataURI},
+	}
 
 	body := responsesRequest{
 		Model:     defaultModel,
@@ -282,12 +294,38 @@ Du bist das weltbekannte Kaffeemilchschaum-Orakel mit mehreren hundert Jahren Er
 				},
 			},
 			{
-				Role: "user",
-				Content: []responsesContent{
-					{Type: "input_image", ImageURL: imageDataURI},
-				},
+				Role:    "user",
+				Content: userContent,
 			},
 		},
 	}
 	return json.Marshal(body)
+}
+
+// creativityTone maps the slider value to a hidden style guide without exposing the number.
+func creativityTone(value int) string {
+	switch {
+	case value <= 3:
+		return "bodenständig, humorvoll, wenig mystisch"
+	case value <= 7:
+		return "ausgewogen, symbolisch, warm"
+	default:
+		return "dramatisch, poetisch, stark orakelhaft"
+	}
+}
+
+// buildUserContext keeps user-provided intent separate from the developer rules.
+func buildUserContext(req *OracleRequest) string {
+	var out strings.Builder
+	out.WriteString("Bitte deute dieses Kaffeeschaumbild")
+	if req.Name != "" {
+		out.WriteString(" für ")
+		out.WriteString(req.Name)
+	}
+	out.WriteString(".")
+	if req.QuestionMode && req.Question != "" {
+		out.WriteString("\nKonkrete Frage: ")
+		out.WriteString(req.Question)
+	}
+	return out.String()
 }

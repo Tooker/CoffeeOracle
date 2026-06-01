@@ -44,8 +44,8 @@ func TestServiceStreamFortune(t *testing.T) {
 	}
 }
 
-// TestBuildResponsesPayloadIncludesQuestionModePrompt verifies concrete questions reach the model prompt.
-func TestBuildResponsesPayloadIncludesQuestionModePrompt(t *testing.T) {
+// TestBuildResponsesPayloadIncludesQuestionMode verifies question mode rules and user context are separate.
+func TestBuildResponsesPayloadIncludesQuestionMode(t *testing.T) {
 	req := &OracleRequest{
 		Name:         "Alex",
 		Creativity:   5,
@@ -66,12 +66,22 @@ func TestBuildResponsesPayloadIncludesQuestionModePrompt(t *testing.T) {
 		t.Fatalf("expected JSON payload, got %v", err)
 	}
 
-	prompt := payload.Input[0].Content[0].Text
-	if !strings.Contains(prompt, req.Question) {
-		t.Fatalf("expected prompt to contain question, got %s", prompt)
+	developerPrompt := payload.Input[0].Content[0].Text
+	userContext := payload.Input[1].Content[0].Text
+	if strings.Contains(developerPrompt, req.Question) {
+		t.Fatalf("expected developer prompt to avoid concrete question, got %s", developerPrompt)
 	}
-	if !strings.Contains(prompt, "Beantworte diese Frage direkt") {
-		t.Fatalf("expected question-mode instruction, got %s", prompt)
+	if !strings.Contains(developerPrompt, "Gib danach eine direkte Antwort auf die gestellte Frage.") {
+		t.Fatalf("expected question-mode instruction, got %s", developerPrompt)
+	}
+	if !strings.Contains(developerPrompt, "Nenne 1-3 sichtbare Formen") {
+		t.Fatalf("expected image-grounding instruction, got %s", developerPrompt)
+	}
+	if !strings.Contains(developerPrompt, "Schreibe 120-220 Wörter") {
+		t.Fatalf("expected length instruction, got %s", developerPrompt)
+	}
+	if !strings.Contains(userContext, req.Question) {
+		t.Fatalf("expected user context to contain question, got %s", userContext)
 	}
 }
 
