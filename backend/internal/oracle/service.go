@@ -17,7 +17,7 @@ import (
 const (
 	PromptVersion = "v5"
 
-	defaultModel = "gpt-5.5-nano"
+	defaultModel = "gpt-5.5"
 	responsesURL = "https://api.openai.com/v1/responses"
 )
 
